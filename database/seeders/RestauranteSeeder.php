@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class RestauranteSeeder extends Seeder
 {
@@ -37,25 +38,26 @@ class RestauranteSeeder extends Seeder
 
         // Categorias iniciais
         $categorias = [
-            ['nome' => 'Entradas', 'icone' => '🥗', 'ordem' => 1, 'ativo' => 1],
-            ['nome' => 'Pratos Principais', 'icone' => '🍽️', 'ordem' => 2, 'ativo' => 1],
-            ['nome' => 'Massas', 'icone' => '🍝', 'ordem' => 3, 'ativo' => 1],
-            ['nome' => 'Grelhados', 'icone' => '🥩', 'ordem' => 4, 'ativo' => 1],
-            ['nome' => 'Sobremesas', 'icone' => '🍮', 'ordem' => 5, 'ativo' => 1],
-            ['nome' => 'Bebidas', 'icone' => '🥤', 'ordem' => 6, 'ativo' => 1],
-            ['nome' => 'Combos', 'icone' => '🍱', 'ordem' => 7, 'ativo' => 1],
+            ['nome' => 'Entradas', 'icone' => '🥗', 'ordem' => 1, 'ativa' => 1],
+            ['nome' => 'Pratos Principais', 'icone' => '🍽️', 'ordem' => 2, 'ativa' => 1],
+            ['nome' => 'Massas', 'icone' => '🍝', 'ordem' => 3, 'ativa' => 1],
+            ['nome' => 'Grelhados', 'icone' => '🥩', 'ordem' => 4, 'ativa' => 1],
+            ['nome' => 'Sobremesas', 'icone' => '🍮', 'ordem' => 5, 'ativa' => 1],
+            ['nome' => 'Bebidas', 'icone' => '🥤', 'ordem' => 6, 'ativa' => 1],
+            ['nome' => 'Combos', 'icone' => '🍱', 'ordem' => 7, 'ativa' => 1],
         ];
 
         foreach ($categorias as $categoria) {
-            DB::table('categorias')->insert([
-                'nome' => $categoria['nome'],
-                'icone' => $categoria['icone'],
-                'ordem' => $categoria['ordem'],
-                'ativo' => $categoria['ativo'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        DB::table('categorias')->insert([
+            'nome' => $categoria['nome'],
+            'slug' => Str::slug($categoria['nome']), // Adicione esta linha
+            'icone' => $categoria['icone'],
+            'ordem' => $categoria['ordem'],
+            'ativa' => $categoria['ativa'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 
         // Configurações padrão
         $configuracoes = [
