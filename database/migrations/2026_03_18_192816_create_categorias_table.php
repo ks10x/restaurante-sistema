@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('categorias', function (Blueprint $table) {
             $table->id();
-            $table->string('nome', 80);
-            $table->text('descricao')->nullable();
-            $table->string('icone', 80)->nullable(); // emoji ou nome do ícone
-            $table->string('imagem', 255)->nullable();
+            $table->string('nome', 60);
+            $table->string('slug', 70)->unique();
+            $table->string('descricao')->nullable(); // Faltava este
+            $table->string('icone')->nullable();
+            $table->string('cor', 7)->nullable();    // Faltava este
             $table->unsignedSmallInteger('ordem')->default(0);
-            $table->boolean('ativo')->default(1);
+            $table->boolean('ativa')->default(1);    // Usando 'ativa' como no seu Model
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

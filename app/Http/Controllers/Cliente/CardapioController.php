@@ -8,24 +8,34 @@ use Illuminate\Http\Request;
  
 class CardapioController extends Controller
 {
+
     public function index(Request $request)
     {
-        $categorias = Categoria::where('ativo', 1)
+        $categorias = Categoria::where('ativa', 1)
             ->orderBy('ordem')
-            ->with(['pratos' => fn($q) => $q->disponivel()->orderBy('ordem')])
+            ->with(['pratos' => function($q) {
+                // Ajustado: prato usa 'disponivel', não 'ativa'
+                $q->where('disponivel', 1)->orderBy('ordem');
+            }])
             ->get();
- 
-        $destaques = Prato::disponivel()->destaques()->with('categoria')->get();
- 
+
+        // Ajustado: nome da variável para bater com o compact
+       $destaques = Prato::where('disponivel', 1) 
+        ->where('destaque', 1)
+        ->with('categoria')
+        ->get();
+
         $config = [
-            'pedido_minimo'  => config_val('pedido_minimo', 30),
-            'taxa_entrega'   => config_val('taxa_entrega_padrao', 8),
-            'tempo_estimado' => config_val('tempo_estimado_entrega', 45),
+            'pedido_minimo' => 30,
+            'taxa_entrega'  => 8,
+            'tempo_estimado'=> 45,
         ];
- 
+
+        // Agora 'destaques' (plural) existe e 'cliente.cardapio' é o seu arquivo
         return view('cliente.cardapio', compact('categorias', 'destaques', 'config'));
+
     }
- 
+    
     public function show(Prato $prato)
     {
         abort_if(!$prato->disponivel, 404);
