@@ -186,10 +186,17 @@
                     <a href="{{ route('profile.edit') }}" class="dropdown-link">
                         <i class="fas fa-user-circle"></i> Minha Conta
                     </a>
-                    <a href="#" class="dropdown-link">
+                    
+                    <a href="{{ route('orders.index') }}" class="dropdown-link">
                         <i class="fas fa-utensils"></i> Meus Pedidos
                     </a>
+                    
+                    <a href="{{ route('profile.edit') }}" class="dropdown-link">
+                        <i class="fas fa-cog"></i> Configurações
+                    </a>
+                    
                     <div style="border-top: 1px solid var(--border); margin: 4px 0;"></div>
+                    
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="dropdown-link" style="width: 100%; background: transparent; border: none; cursor: pointer; color: var(--red);">
