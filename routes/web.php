@@ -10,6 +10,9 @@ use App\Http\Controllers\Cliente\CheckoutController;
 // Rota Pública
 Route::get('/', [CardapioController::class, 'index'])->name('cardapio');
 
+// Redireciona o login para o cardápio
+Route::get('/cardapio', [CardapioController::class, 'index'])->name('cardapio.index');
+
 // Rotas Protegidas (Apenas usuários logados)
 Route::middleware(['auth', 'verified'])->group(function () {
     
