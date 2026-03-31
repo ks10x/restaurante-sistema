@@ -19,8 +19,8 @@ class RestauranteSeeder extends Seeder
         DB::table('users')->insert([
             'name' => 'Administrador',
             'email' => 'admin@restaurante.com',
-            'password' => Hash::make('admin@123'), // Usando Hash::make para gerar o bcrypt
-            'role' => 'admin',
+            'password' => Hash::make('admin@123'),
+            'role' => \App\Models\User::ROLE_ADMIN,
             'email_verified_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),
@@ -29,8 +29,8 @@ class RestauranteSeeder extends Seeder
         DB::table('users')->insert([
             'name' => 'Cozinha Principal',
             'email' => 'cozinha@restaurante.com',
-            'password' => Hash::make('admin@123'), // Usando Hash::make para gerar o bcrypt
-            'role' => 'cozinha',
+            'password' => Hash::make('admin@123'),
+            'role' => \App\Models\User::ROLE_COZINHA,
             'email_verified_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),

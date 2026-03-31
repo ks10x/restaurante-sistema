@@ -3,31 +3,50 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Order;
+use App\Models\Pedido;
 use Illuminate\Support\Facades\Log;
 
 class WebhookController extends Controller
 {
-    public function handlePagarme(Request $request)
+    public function pagarme(Request $request)
     {
-        // O Pagar.me envia os dados no corpo da requisição
         $data = $request->all();
 
-        // Log para debug (importante no início)
         Log::info('Webhook Pagar.me recebido', $data);
 
-        // Verificamos se o evento é de pagamento confirmado
-        if ($data['event'] === 'transaction.status_changed' && $data['current_status'] === 'paid') {
-            
-            $order = Order::where('pagamento_id', $data['id'])->first();
+        // Pagar.me v5 webhook format
+        $type = $data['type'] ?? '';
 
-            if ($order) {
-                // Atualiza para o status que dispara o acompanhamento na sua View
-                $order->update([
-                    'status' => 'pedido enviado'
-                ]);
-                
-                return response()->json(['status' => 'success'], 200);
+        if ($type === 'charge.paid' || $type === 'order.paid') {
+            $chargeId = $data['data']['id'] ?? null;
+
+            if ($chargeId) {
+                $pedido = Pedido::where('pagamento_ref', $chargeId)->first();
+
+                if ($pedido && $pedido->pagamento_status !== 'aprovado') {
+                    $pedido->update([
+                        'pagamento_status' => 'aprovado',
+                        'status'           => 'confirmado',
+                        'confirmado_em'    => now(),
+                    ]);
+
+                    // Register status history
+                    $pedido->historico()->create([
+                        'status'  => 'confirmado',
+                        'user_id' => $pedido->user_id,
+                    ]);
+
+                    Log::info('Pedido confirmado via webhook', ['codigo' => $pedido->codigo]);
+
+                    // Dispatch event for kitchen
+                    try {
+                        event(new \App\Events\NovoPedidoCriado($pedido->load('itens', 'usuario')));
+                    } catch (\Exception $e) {
+                        Log::warning('Event dispatch failed: ' . $e->getMessage());
+                    }
+
+                    return response()->json(['status' => 'success'], 200);
+                }
             }
         }
 

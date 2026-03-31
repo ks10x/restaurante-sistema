@@ -8,17 +8,17 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:    #0D0D0D;
-  --bg2:   #141414;
-  --bg3:   #1A1A1A;
-  --col:   rgba(255,255,255,0.06);
-  --text:  #F0F0F0;
-  --text-m:#A0A0A0;
-  --text-s:#606060;
+  --bg:    #F8FAFC;
+  --bg2:   #FFFFFF;
+  --bg3:   #F1F5F9;
+  --col:   rgba(30,58,138,0.1);
+  --text:  #0F172A;
+  --text-m:#64748B;
+  --text-s:#94A3B8;
   --amber: #F5A623;
   --green: #2ECC71;
   --red:   #E74C3C;
-  --blue:  #3498DB;
+  --blue:  #1E3A8A; /* Navy Blue */
   --orange:#E67E22;
   --mono:  'JetBrains Mono', monospace;
   --sans:  'DM Sans', sans-serif;
@@ -32,7 +32,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;
 }
 .topbar-left{display:flex;align-items:center;gap:1.5rem}
-.topbar-logo{font-family:var(--mono);font-size:.85rem;color:var(--amber);letter-spacing:.05em;font-weight:700}
+.topbar-logo{font-family:var(--mono);font-size:.85rem;color:var(--blue);letter-spacing:.05em;font-weight:700}
 .topbar-status{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--green)}
 .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}

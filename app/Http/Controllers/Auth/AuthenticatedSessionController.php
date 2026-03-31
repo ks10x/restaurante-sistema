@@ -77,7 +77,7 @@ class AuthenticatedSessionController extends Controller
             User::ROLE_ADMIN => route('admin.dashboard'),
             User::ROLE_COZINHA => route('cozinha.fila'),
             User::ROLE_ENTREGADOR => route('entregador.index'),
-            default => route('cardapio'),
+            default => route('cardapio.index'),
         });
     }
 
@@ -89,6 +89,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect('/');
+        return redirect()->route('cardapio.index');
     }
 }
