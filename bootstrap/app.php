@@ -11,9 +11,24 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // É AQUI que você adiciona a exceção do CSRF para o Webhook
         $middleware->validateCsrfTokens(except: [
             '/webhooks/pagarme', 
+        ]);
+
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+        ]);
+
+        $middleware->append([
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\ForceHttps::class,
+            \App\Http\Middleware\BlockSuspiciousPaths::class,
+        ]);
+
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\ShareAdminData::class,
+            \App\Http\Middleware\SessionFingerprint::class,
+            \App\Http\Middleware\TenantIsolation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -12,7 +12,7 @@
         <a href="{{ route('orders.index') }}" style="background: var(--amber); color: var(--dark); padding: 18px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: 0.3s;">
             <i class="fas fa-motorcycle"></i> Acompanhar Entrega
         </a>
-        <a href="{{ route('cardapio') }}" style="color: var(--text-m); text-decoration: none; font-size: 0.9rem;">
+        <a href="{{ route('cardapio.index') }}" style="color: var(--text-m); text-decoration: none; font-size: 0.9rem;">
             Voltar para a página inicial
         </a>
     </div>

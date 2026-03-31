@@ -1,42 +1,186 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\WebhookController;
-use App\Http\Controllers\Cliente\CardapioController;
+
+// ─────────────────────────────────────────────────────────────
+// Controllers de Auth
+// ─────────────────────────────────────────────────────────────
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\Auth\TwoFactorController;
+
+// ─────────────────────────────────────────────────────────────
+// Controllers Admin
+// ─────────────────────────────────────────────────────────────
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\CardapioController as AdminCardapioController;
+use App\Http\Controllers\Admin\EstoqueController;
+
+// ─────────────────────────────────────────────────────────────
+// Controllers Cliente
+// ─────────────────────────────────────────────────────────────
+use App\Http\Controllers\Cliente\CardapioController as ClienteCardapioController;
+use App\Http\Controllers\Cliente\PedidoController;
 use App\Http\Controllers\Cliente\CheckoutController;
 
-// Rota Pública
-Route::get('/', [CardapioController::class, 'index'])->name('cardapio');
+// ─────────────────────────────────────────────────────────────
+// Controllers Cozinha
+// ─────────────────────────────────────────────────────────────
+use App\Http\Controllers\Cozinha\FilaController;
 
-// Redireciona o login para o cardápio
-Route::get('/cardapio', [CardapioController::class, 'index'])->name('cardapio.index');
+// ─────────────────────────────────────────────────────────────
+// Outros
+// ─────────────────────────────────────────────────────────────
+use App\Http\Controllers\LgpdController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WebhookController;
 
-// Rotas Protegidas (Apenas usuários logados)
-Route::middleware(['auth', 'verified'])->group(function () {
-    
-    Route::get('/dashboard', function () {
-    return redirect()->route('cardapio');
-    })->name('dashboard');
 
-    // Perfil
-    Route::controller(ProfileController::class)->group(function () {
-        Route::get('/profile', 'edit')->name('profile.edit');
-        Route::patch('/profile', 'update')->name('profile.update');
-        Route::delete('/profile', 'destroy')->name('profile.destroy');
-        Route::patch('/profile/endereco', 'updateAddress')->name('profile.address.update');
-    });
+// ═════════════════════════════════════════════════════════════
+// ROTA RAIZ
+// ═════════════════════════════════════════════════════════════
+Route::get('/', fn() => redirect()->route('cardapio.index'));
 
-    // Pedidos
-    Route::get('/meus-pedidos', [OrderController::class, 'index'])->name('orders.index');
 
-    // Checkout
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout/processar', [CheckoutController::class, 'processarPagamento'])->name('checkout.process');
+// ═════════════════════════════════════════════════════════════
+// AUTENTICAÇÃO (apenas para visitantes não logados)
+// ═════════════════════════════════════════════════════════════
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 });
 
-// Webhook (Fora do Middleware Auth, pois o Pagar.me não está logado no seu site)
-Route::post('/webhooks/pagarme', [WebhookController::class, 'handlePagarme'])->name('webhook.pagarme');
+Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout')->middleware('auth');
 
-require __DIR__.'/auth.php';
+// Verificação de e-mail
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', EmailVerificationPromptController::class)->name('verification.notice');
+    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+
+    Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+    Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+});
+
+
+// ═════════════════════════════════════════════════════════════
+// 2FA — AUTENTICAÇÃO EM DUAS ETAPAS
+// ═════════════════════════════════════════════════════════════
+Route::middleware('auth')->prefix('2fa')->name('2fa.')->group(function () {
+    Route::get('/', [TwoFactorController::class, 'index'])->name('index');
+    Route::post('/', [TwoFactorController::class, 'verify'])->name('verify');
+    Route::get('setup', [TwoFactorController::class, 'setup'])->name('setup');
+    Route::post('setup', [TwoFactorController::class, 'confirm'])->name('confirm');
+});
+
+
+// ═════════════════════════════════════════════════════════════
+// CARDÁPIO PÚBLICO (sem login)
+// ═════════════════════════════════════════════════════════════
+Route::prefix('cardapio')->name('cardapio.')->group(function () {
+    Route::get('/', [ClienteCardapioController::class, 'index'])->name('index');
+    Route::get('/buscar', [ClienteCardapioController::class, 'buscar'])->name('buscar');
+    Route::get('/{prato:slug}', [ClienteCardapioController::class, 'show'])->name('show');
+});
+
+
+// ═════════════════════════════════════════════════════════════
+// ÁREA DO CLIENTE (autenticado, role=2)
+// ═════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'role:0,2'])->group(function () {
+
+    // Carrinho e Checkout
+    Route::get('/carrinho', [PedidoController::class, 'carrinho'])->name('cliente.carrinho');
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('cliente.checkout');
+    Route::post('/checkout/pagar', [CheckoutController::class, 'processarPagamento'])->name('cliente.checkout.pagar');
+
+    // Pedidos
+    Route::post('/pedidos', [PedidoController::class, 'store'])->name('cliente.pedido.store');
+    Route::get('/pedidos/{codigo}/acompanhar', [PedidoController::class, 'acompanhar'])->name('cliente.pedido.acompanhar');
+    Route::get('/pedidos/{codigo}/status', [PedidoController::class, 'statusApi'])->name('cliente.pedido.status-api');
+    Route::get('/meus-pedidos', [PedidoController::class, 'historico'])->name('cliente.pedidos');
+
+    // Perfil
+    Route::get('/perfil', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/perfil', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/perfil', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // LGPD
+    Route::prefix('privacidade')->name('lgpd.')->group(function () {
+        Route::get('/', [LgpdController::class, 'index'])->name('index');
+        Route::post('/consentimento', [LgpdController::class, 'updateConsent'])->name('consent');
+        Route::get('/exportar', [LgpdController::class, 'export'])->name('export');
+        Route::delete('/excluir-conta', [LgpdController::class, 'anonymize'])->name('anonymize');
+    });
+});
+
+
+// ═════════════════════════════════════════════════════════════
+// COZINHA (role=1)
+// ═════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'role:0,1'])
+    ->prefix('cozinha')
+    ->name('cozinha.')
+    ->group(function () {
+        Route::get('/', [FilaController::class, 'index'])->name('fila');
+        Route::patch('/pedidos/{pedido}/avancar', [FilaController::class, 'avancarStatus'])->name('pedido.avancar');
+        Route::get('/api/pedidos', [FilaController::class, 'pedidosApi'])->name('api.pedidos');
+    });
+
+
+// ═════════════════════════════════════════════════════════════
+// ADMIN (role=0)
+// ═════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'role:0'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        // Dashboard
+        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Cardápio
+        Route::prefix('cardapio')->name('cardapio.')->group(function () {
+            Route::get('/', [AdminCardapioController::class, 'index'])->name('index');
+            Route::post('/', [AdminCardapioController::class, 'store'])->name('store');
+            Route::put('/{prato}', [AdminCardapioController::class, 'update'])->name('update');
+            Route::patch('/{prato}/toggle', [AdminCardapioController::class, 'toggleDisponivel'])->name('toggle');
+            Route::delete('/{prato}', [AdminCardapioController::class, 'destroy'])->name('destroy');
+        });
+
+        // Estoque
+        Route::prefix('estoque')->name('estoque.')->group(function () {
+            Route::get('/', [EstoqueController::class, 'index'])->name('index');
+            Route::post('/{insumo}/movimentar', [EstoqueController::class, 'movimentar'])->name('movimentar');
+        });
+
+        // Configurações (placeholder — controller ainda não criado)
+        Route::get('/configuracoes', fn() => view('admin.configuracoes.index'))->name('configuracoes.index');
+    });
+
+
+// ═════════════════════════════════════════════════════════════
+// WEBHOOKS (sem CSRF — já excluído no bootstrap/app.php)
+// ═════════════════════════════════════════════════════════════
+Route::post('/webhooks/pagarme', [WebhookController::class, 'pagarme'])->name('webhook.pagarme');

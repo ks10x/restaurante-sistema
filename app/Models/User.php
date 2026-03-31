@@ -9,19 +9,28 @@ use Illuminate\Notifications\Notifiable;
  
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes, \App\Traits\HasAudit;
+
+    public const ROLE_ADMIN = 0;
+    public const ROLE_COZINHA = 1;
+    public const ROLE_CLIENTE = 2;
+    public const ROLE_ENTREGADOR = 3;
 
     protected $fillable = [
-    'name',
-    'email',
-    'password',
-    'cpf',
-    'phone', 
-    'avatar', 
-    'role', 
-    'status', 
-    'last_login_at', 
-];
+        'name',
+        'email',
+        'password',
+        'cpf_encrypted',
+        'phone_encrypted', 
+        'avatar', 
+        'role', 
+        'status', 
+        'last_login_at', 
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
+        'tenant_id'
+    ];
  
     protected $hidden = ['password', 'remember_token'];
  
@@ -29,12 +38,23 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_login_at'     => 'datetime',
         'password'          => 'hashed',
+        'cpf_encrypted'     => \App\Casts\EncryptedString::class,
+        'phone_encrypted'   => \App\Casts\EncryptedString::class,
     ];
  
-    public function isAdmin(): bool      { return $this->role === 'admin'; }
-    public function isCozinha(): bool    { return $this->role === 'cozinha'; }
-    public function isCliente(): bool    { return $this->role === 'cliente'; }
-    public function isEntregador(): bool { return $this->role === 'entregador'; }
+    public function isAdmin(): bool      { return (int)$this->role === self::ROLE_ADMIN; }
+    public function isCozinha(): bool    { return (int)$this->role === self::ROLE_COZINHA; }
+    public function isCliente(): bool    { return (int)$this->role === self::ROLE_CLIENTE; }
+    public function isEntregador(): bool { return (int)$this->role === self::ROLE_ENTREGADOR; }
+
+    public function getRoleNameAttribute(): string {
+        return match((int)$this->role) {
+            self::ROLE_ADMIN => 'admin',
+            self::ROLE_COZINHA => 'cozinha',
+            self::ROLE_ENTREGADOR => 'entregador',
+            default => 'cliente',
+        };
+    }
  
     public function enderecos()    { return $this->hasMany(Endereco::class); }
     public function pedidos()      { return $this->hasMany(Pedido::class); }

@@ -60,7 +60,7 @@
 <body>
 
 <div class="container">
-    <a href="{{ route('cardapio') }}" class="back-link">
+    <a href="{{ route('cardapio.index') }}" class="back-link">
         <i class="fas fa-arrow-left"></i> Voltar ao Cardápio
     </a>
 

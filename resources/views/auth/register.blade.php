@@ -13,7 +13,7 @@
 <body class="flex items-center justify-center min-h-screen p-6">
     <div class="w-full max-w-md bg-[#2A2420] rounded-[32px] p-8 border border-[#D4A3731A] shadow-2xl">
         
-        <a href="{{ route('cardapio') }}" class="inline-flex items-center text-zinc-500 hover:text-[#D4A373] transition-all mb-8 group">
+        <a href="{{ route('cardapio.index') }}" class="inline-flex items-center text-zinc-500 hover:text-[#D4A373] transition-all mb-8 group">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
