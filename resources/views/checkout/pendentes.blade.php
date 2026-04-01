@@ -22,7 +22,7 @@
     </div>
 
     <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
-        <a href="{{ route('orders.index') }}" class="btn-outline" style="text-decoration: none; color: var(--text); font-weight: 500;">
+        <a href="{{ route('cliente.pedidos') }}" class="btn-outline" style="text-decoration: none; color: var(--text); font-weight: 500;">
             <i class="fas fa-receipt"></i> Ver detalhes do pedido
         </a>
         <p style="font-size: 0.8rem; color: var(--text-s);">O pedido será cancelado automaticamente se não for pago em 30 minutos.</p>
