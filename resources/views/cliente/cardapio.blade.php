@@ -138,17 +138,18 @@
         /* BARRA FLUTUANTE (GLASSMORPHISM) */
         .floating-cart {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
-            width: 92%; max-width: 500px; height: 64px;
-            background: rgba(30, 58, 138, 0.9); /* Navy with opacity */
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            width: 90%; max-width: 480px; height: 60px;
+            background: rgba(30, 58, 138, 0.95); /* Deep Navy */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px; z-index: 250; 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            cursor: pointer; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: none; /* Mobile Only */
+            border-radius: 18px; z-index: 250; 
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; /* Show on all screens when active */
         }
-        .floating-cart.active { bottom: 25px; }
+        .floating-cart.active { bottom: 30px; }
+        .floating-cart:hover { transform: translateX(-50%) translateY(-3px); box-shadow: 0 15px 40px rgba(30, 58, 138, 0.4); }
         .floating-cart-inner { display: flex; align-items: center; justify-content: space-between; height: 100%; padding: 0 1.2rem; color: #FFFFFF; }
         
         .float-qty-box { background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 12px; font-weight: 800; font-size: 1.1rem; border: 1px solid rgba(255,255,255,0.1); }
@@ -171,7 +172,6 @@
 
         @media(max-width:1024px){ 
             .main-wrap{grid-template-columns:220px 1fr; padding: 2rem 1.5rem 6rem; gap: 1.5rem;} 
-            .floating-cart { display: flex; }
         }
         @media(max-width:768px){ 
             .main-wrap{grid-template-columns:1fr;} 
@@ -271,7 +271,7 @@
                     @foreach($cat->pratos as $p)
                         <div class="card js-card-prato" data-prato="{{ json_encode($p) }}">
                             <div class="card-img">
-                                <img src="{{ asset('storage/' . $p->imagem) }}" alt="{{ $p->nome }}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=300&auto=format&fit=crop'">
+                                <img src="{{ asset('storage/' . $p->imagem) }}" alt="{{ $p->nome }}" class="js-dish-img">
                             </div>
                             <div class="card-body">
                                 <div class="card-nome">{{ $p->nome }}</div>
@@ -320,7 +320,7 @@
             <span style="color: var(--text-m);">Subtotal</span>
             <span id="cartTotalFinal" style="font-weight:bold; color:var(--amber); font-size:1.4rem;">R$ 0,00</span>
         </div>
-        <button id="btnCheckoutCart" style="width:100%; background:var(--amber); border:none; padding:20px; border-radius:16px; font-weight:800; cursor:pointer; color: #fff; font-size: 1.1rem; transition: 0.3s;" onmouseover="this.style.background='var(--amber-d)'" onmouseout="this.style.background='var(--amber)'">
+        <button id="btnCheckoutCart" style="width:100%; background:var(--amber); border:none; padding:20px; border-radius:16px; font-weight:800; cursor:pointer; color: #fff; font-size: 1.1rem; transition: 0.3s;">
             Finalizar Pedido
         </button>
     </div>
@@ -347,79 +347,106 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $csp_nonce }}">
     document.addEventListener('DOMContentLoaded', function() {
-        // Load cart from localStorage or start empty
+        // --- DATA & STATE ---
         let cart = JSON.parse(localStorage.getItem('bellacucina_cart') || '[]');
         let currentPrato = null;
         let currentQtd = 1;
 
-        // Render existing cart on load
+        // --- ELEMENTS ---
+        const els = {
+            cartItems: document.getElementById('cartItems'),
+            cartBadge: document.getElementById('cartBadge'),
+            floatQty: document.getElementById('floatQty'),
+            floatTotal: document.getElementById('floatTotal'),
+            cartTotalFinal: document.getElementById('cartTotalFinal'),
+            floatingCart: document.getElementById('floatingCart'),
+            cartDrawer: document.getElementById('cartDrawer'),
+            cartOverlay: document.getElementById('cartOverlay'),
+            overlay: document.getElementById('overlay'),
+            mImg: document.getElementById('m-img'),
+            mNome: document.getElementById('m-nome'),
+            mDesc: document.getElementById('m-desc'),
+            mQtd: document.getElementById('m-qtd'),
+            mTotal: document.getElementById('m-total')
+        };
+
+        // --- INITIALIZE ---
         renderCart();
 
-        // BIND EVENT LISTENERS (For CSP Compliance with Safety operators)
+        // --- EVENT DELEGATION & BINDINGS ---
+        
+        // 1. Sidebar Categories
+        document.querySelectorAll('.js-cat-filter').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                filtrar(btn.dataset.id, btn);
+            });
+        });
+
+        // 2. Global Toggles (Universal)
         document.getElementById('btnToggleCartTop')?.addEventListener('click', toggleCart);
         document.getElementById('btnCloseCart')?.addEventListener('click', toggleCart);
-        document.getElementById('cartOverlay')?.addEventListener('click', toggleCart);
-        document.getElementById('floatingCart')?.addEventListener('click', toggleCart);
-        
-        document.getElementById('btnCheckoutCart')?.addEventListener('click', () => {
-            if(cart.length === 0) return;
-            localStorage.setItem('bellacucina_cart', JSON.stringify(cart));
-            window.location.href = '/checkout';
+        els.cartOverlay?.addEventListener('click', toggleCart);
+        els.floatingCart?.addEventListener('click', toggleCart);
+
+        // 3. Modal Actions
+        document.getElementById('m-btn-minus')?.addEventListener('click', () => updateModalQtd(-1));
+        document.getElementById('m-btn-plus')?.addEventListener('click', () => updateModalQtd(1));
+        document.getElementById('m-btn-confirm')?.addEventListener('click', () => {
+            if (currentPrato) {
+                addToCart(currentPrato, currentQtd);
+                closeModal();
+            }
         });
-        
-        document.getElementById('m-btn-minus')?.addEventListener('click', () => mudarQtd(-1));
-        document.getElementById('m-btn-plus')?.addEventListener('click', () => mudarQtd(1));
-        document.getElementById('m-btn-confirm')?.addEventListener('click', confirmarAdd);
-        
-        document.getElementById('overlay')?.addEventListener('click', (e) => {
-            if(e.target.id === 'overlay') document.getElementById('overlay').classList.remove('open');
+        els.overlay?.addEventListener('click', (e) => {
+            if(e.target === els.overlay) closeModal();
         });
 
-        // Category Filter Bindings
-        document.querySelectorAll('.js-cat-filter').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                let catId = this.dataset.id;
-                filtrar(catId, this);
-            });
-        });
-
-        // Product Cards Bindings
-        document.querySelectorAll('.js-card-prato').forEach(card => {
-            card.addEventListener('click', function() {
-                try {
-                    let prato = JSON.parse(this.dataset.prato);
-                    abrirModal(prato);
-                } catch(e) { console.error('Erro ao abrir prato:', e); }
-            });
-        });
-
-        document.querySelectorAll('.js-btn-add-prato').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+        // 4. Product Click & Quick Add (using event delegation for efficiency)
+        document.addEventListener('click', (e) => {
+            // Quick Add '+' Button
+            const btnAdd = e.target.closest('.js-btn-add-prato');
+            if (btnAdd) {
                 e.stopPropagation();
                 try {
-                    let prato = JSON.parse(this.dataset.prato);
+                    const prato = JSON.parse(btnAdd.dataset.prato);
                     addToCart(prato, 1);
-                } catch(e) { console.error('Erro ao add prato:', e); }
-            });
-        });
+                    animateFloatingCart();
+                } catch(err) { console.error('Error parsing prato:', err); }
+                return;
+            }
 
-        // DELEGATED REMOVE BINDING (since Cart is re-rendered dynamically)
-        document.getElementById('cartItems')?.addEventListener('click', function(e) {
-            let target = e.target.closest('.js-btn-remove');
-            if(target) {
-                let index = target.dataset.index;
-                remover(index);
+            // Open Modal Card
+            const card = e.target.closest('.js-card-prato');
+            if (card) {
+                try {
+                    const prato = JSON.parse(card.dataset.prato);
+                    openModal(prato);
+                } catch(err) { console.error('Error parsing prato:', err); }
+                return;
+            }
+
+            // Remove from Cart
+            const btnRemove = e.target.closest('.js-btn-remove');
+            if (btnRemove) {
+                removeFromCart(parseInt(btnRemove.dataset.index));
+                return;
             }
         });
 
-        // LOGIC FUNCTIONS
-        function addToCart(prato, qtd = 1) {
-            const itemIndex = cart.findIndex(i => i.id === prato.id);
-            if (itemIndex > -1) {
-                cart[itemIndex].qtd += qtd;
+        // 5. Checkout Action
+        document.getElementById('btnCheckoutCart')?.addEventListener('click', () => {
+            if(cart.length > 0) window.location.href = '/checkout';
+        });
+
+        // --- LOGIC FUNCTIONS ---
+
+        function addToCart(prato, qtd) {
+            const index = cart.findIndex(it => it.id === prato.id);
+            if (index > -1) {
+                cart[index].qtd += qtd;
             } else {
                 cart.push({
                     id: prato.id,
@@ -432,116 +459,123 @@
             renderCart();
         }
 
-        function renderCart() {
-            const container = document.getElementById('cartItems');
-            const badge = document.getElementById('cartBadge');
-            const floatQty = document.getElementById('floatQty');
-            const floatTotal = document.getElementById('floatTotal');
-            const cartTotalFinal = document.getElementById('cartTotalFinal');
-            
-            if (!container) return;
-            
-            container.innerHTML = '';
-            let total = 0;
-            let totalQtd = 0;
-
-            cart.forEach((item, index) => {
-                const subtotal = item.preco * item.qtd;
-                total += subtotal;
-                totalQtd += item.qtd;
-                
-                container.innerHTML += `
-                    <div style="display:flex; gap:12px; margin-bottom:15px; align-items:center; background:var(--dark2); padding:12px; border-radius:16px; border: 1px solid var(--border);">
-                        <img src="/storage/${item.imagem}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&auto=format&fit=crop'" style="width:55px; height:55px; border-radius:10px; object-fit:cover;">
-                        <div style="flex:1">
-                            <div style="font-size:0.9rem; font-weight:600;">${item.nome}</div>
-                            <div style="color:var(--amber); font-weight:bold;">${item.qtd}x R$ ${item.preco.toLocaleString('pt-br', {minimumFractionDigits: 2})}</div>
-                        </div>
-                        <button class="js-btn-remove" data-index="${index}" style="background:none; border:none; color:var(--red); cursor:pointer; padding: 5px;"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                `;
-            });
-
-            const totalStr = 'R$ ' + total.toLocaleString('pt-br', {minimumFractionDigits: 2});
-
-            if(badge) badge.innerText = totalQtd;
-            if(floatQty) floatQty.innerText = totalQtd;
-            if(floatTotal) floatTotal.innerText = totalStr;
-            if(cartTotalFinal) cartTotalFinal.innerText = totalStr;
-
-            const floatingCart = document.getElementById('floatingCart');
-            if(totalQtd > 0) {
-                floatingCart.classList.add('active');
-            } else {
-                floatingCart.classList.remove('active');
-                container.innerHTML = `
-                    <div id="cartEmpty" style="text-align: center; padding: 40px 20px; color: var(--text-m); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                        <i class="fas fa-shopping-basket" style="font-size: 3rem; color: var(--border); margin-bottom: 15px;"></i>
-                        <p>Sua sacola está vazia</p>
-                        <p style="font-size: 0.85rem; color: var(--text-s); margin-top: 5px;">Adicione pratos deliciosos!</p>
-                    </div>
-                `;
-                document.getElementById('cartDrawer').classList.remove('open');
-                document.getElementById('cartOverlay').classList.remove('open');
-            }
-
-            // Persist to localStorage
-            localStorage.setItem('bellacucina_cart', JSON.stringify(cart));
-        }
-
-        function abrirModal(prato) {
-            currentPrato = prato;
-            currentQtd = 1;
-            document.getElementById('m-img').src = '/storage/' + prato.imagem;
-            document.getElementById('m-img').onerror = function() { this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop'; };
-            document.getElementById('m-nome').innerText = prato.nome;
-            document.getElementById('m-desc').innerText = prato.descricao || 'Prato artesanal preparado com o rigor da culinária clássica Bella Cucina.';
-            document.getElementById('m-qtd').innerText = currentQtd;
-            atualizarPrecoModal();
-            document.getElementById('overlay').classList.add('open');
-        }
-
-        function mudarQtd(v) {
-            currentQtd = Math.max(1, currentQtd + v);
-            document.getElementById('m-qtd').innerText = currentQtd;
-            atualizarPrecoModal();
-        }
-
-        function atualizarPrecoModal() {
-            let total = parseFloat(currentPrato.preco) * currentQtd;
-            document.getElementById('m-total').innerText = 'R$ ' + total.toLocaleString('pt-br', {minimumFractionDigits: 2});
-        }
-
-        function confirmarAdd() {
-            addToCart(currentPrato, currentQtd);
-            document.getElementById('overlay').classList.remove('open');
-        }
-
-        function remover(index) {
+        function removeFromCart(index) {
             cart.splice(index, 1);
             renderCart();
         }
 
-        function toggleCart() { 
-            let drawer = document.getElementById('cartDrawer');
-            let overlay = document.getElementById('cartOverlay');
-            if (drawer && overlay) {
-                drawer.classList.toggle('open'); 
-                overlay.classList.toggle('open');
+        function renderCart() {
+            if (!els.cartItems) return;
+            
+            els.cartItems.innerHTML = '';
+            let total = 0;
+            let totalQtd = 0;
+
+            if (cart.length === 0) {
+                els.cartItems.innerHTML = `
+                    <div id="cartEmpty" style="text-align: center; padding: 60px 20px; color: var(--text-m); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                        <i class="fas fa-shopping-basket" style="font-size: 3.5rem; color: var(--border); margin-bottom: 20px;"></i>
+                        <p style="font-weight: 600; font-size: 1.1rem;">Sua sacola está vazia</p>
+                        <p style="font-size: 0.9rem; color: var(--text-s); margin-top: 8px;">Que tal adicionar alguns pratos deliciosos?</p>
+                    </div>
+                `;
+                els.floatingCart?.classList.remove('active');
+                els.cartDrawer?.classList.remove('open');
+                els.cartOverlay?.classList.remove('open');
+            } else {
+                cart.forEach((item, i) => {
+                    total += item.preco * item.qtd;
+                    totalQtd += item.qtd;
+                    
+                    els.cartItems.innerHTML += `
+                        <div style="display:flex; gap:12px; margin-bottom:12px; align-items:center; background:var(--surface); padding:10px; border-radius:14px; border: 1px solid var(--border); transition: 0.2s;">
+                            <img src="/storage/${item.imagem}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&auto=format&fit=crop'" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">
+                            <div style="flex:1">
+                                <div style="font-size:0.85rem; font-weight:600; color:var(--text);">${item.nome}</div>
+                                <div style="color:var(--amber); font-weight:700; font-size:0.9rem;">${item.qtd}x R$ ${item.preco.toLocaleString('pt-br', {minimumFractionDigits: 2})}</div>
+                            </div>
+                            <button class="js-btn-remove" data-index="${i}" style="background:var(--dark2); border:none; color:var(--red); cursor:pointer; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:0.2s;">
+                                <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                els.floatingCart?.classList.add('active');
             }
+
+            const totalStr = 'R$ ' + total.toLocaleString('pt-br', {minimumFractionDigits: 2});
+            if(els.cartBadge) els.cartBadge.innerText = totalQtd;
+            if(els.floatQty) els.floatQty.innerText = totalQtd;
+            if(els.floatTotal) els.floatTotal.innerText = totalStr;
+            if(els.cartTotalFinal) els.cartTotalFinal.innerText = totalStr;
+
+            localStorage.setItem('bellacucina_cart', JSON.stringify(cart));
+        }
+
+        function openModal(prato) {
+            currentPrato = prato;
+            currentQtd = 1;
+            
+            els.mImg.src = '/storage/' + prato.imagem;
+            els.mNome.innerText = prato.nome;
+            els.mDesc.innerText = prato.descricao || 'Este prato é preparado com ingredientes frescos e selecionados, seguindo a tradição de excelência da Bella Cucina.';
+            els.mQtd.innerText = currentQtd;
+            
+            updateModalPrice();
+            els.overlay?.classList.add('open');
+        }
+
+        function closeModal() {
+            els.overlay?.classList.remove('open');
+            currentPrato = null;
+        }
+
+        function updateModalQtd(v) {
+            currentQtd = Math.max(1, currentQtd + v);
+            els.mQtd.innerText = currentQtd;
+            updateModalPrice();
+        }
+
+        function updateModalPrice() {
+            if (!currentPrato) return;
+            const total = parseFloat(currentPrato.preco) * currentQtd;
+            els.mTotal.innerText = 'R$ ' + total.toLocaleString('pt-br', {minimumFractionDigits: 2});
+        }
+
+        function toggleCart() {
+            els.cartDrawer?.classList.toggle('open');
+            els.cartOverlay?.classList.toggle('open');
         }
 
         function filtrar(id, el) {
-            document.querySelectorAll('.cat-item').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.cat-item').forEach(b => b.classList.remove('active'));
             if(el) el.classList.add('active');
+
+            const sections = document.querySelectorAll('.categoria-section');
             if(id === 'todas') {
-                document.querySelectorAll('.categoria-section').forEach(s => s.style.display = 'block');
+                sections.forEach(s => s.style.display = 'block');
             } else {
-                document.querySelectorAll('.categoria-section').forEach(s => {
+                sections.forEach(s => {
                     s.style.display = (s.id === 'secao-'+id) ? 'block' : 'none';
                 });
             }
+            window.scrollTo({ top: document.querySelector('.main-wrap').offsetTop - 100, behavior: 'smooth' });
         }
+
+        function animateFloatingCart() {
+            els.floatingCart?.animate([
+                { transform: 'translateX(-50%) scale(1)' },
+                { transform: 'translateX(-50%) scale(1.05)' },
+                { transform: 'translateX(-50%) scale(1)' }
+            ], { duration: 300, easing: 'ease-out' });
+        }
+
+        // --- GLOBAL ERROR HANDLER FOR IMAGES (CSP Friendly) ---
+        document.addEventListener('error', (e) => {
+            if (e.target.tagName === 'IMG' && (e.target.classList.contains('js-dish-img') || e.target.id === 'm-img')) {
+                e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+            }
+        }, true);
     });
 </script>
 
