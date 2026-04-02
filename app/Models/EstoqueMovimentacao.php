@@ -9,6 +9,8 @@ class EstoqueMovimentacao extends Model
 {
     use HasFactory;
 
+    protected $table = 'estoque_movimentacoes';
+
     protected $fillable = [
         'insumo_id', 'user_id', 'tipo', 'quantidade',
         'quantidade_anterior', 'quantidade_posterior', 'motivo'

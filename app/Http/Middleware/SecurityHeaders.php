@@ -16,14 +16,14 @@ class SecurityHeaders
         $response = $next($request);
 
         if (method_exists($response, 'header')) {
-            // Em desenvolvimento: CSP permissiva para CDNs. Em produção, compilar assets localmente.
+
             $csp = implode('; ', [
-                "default-src 'self'",
-                "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com",
-                "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-                "img-src 'self' data: blob: https://images.unsplash.com https://ui-avatars.com https://lh3.googleusercontent.com",
-                "connect-src 'self'",
+                "default-src 'self' *",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' *",
+                "style-src 'self' 'unsafe-inline' *",
+                "font-src 'self' *",
+                "img-src 'self' data: blob: *",
+                "connect-src 'self' *",
                 "frame-ancestors 'none'",
             ]);
             $response->header('Content-Security-Policy', $csp);

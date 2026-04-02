@@ -65,6 +65,7 @@ class User extends Authenticatable
     public function pedidos()      { return $this->hasMany(Pedido::class); }
     public function avaliacoes()   { return $this->hasMany(Avaliacao::class); }
     public function notificacoes() { return $this->hasMany(Notificacao::class); }
+    public function funcionario()  { return $this->hasOne(Funcionario::class); }
  
     public function enderecoAtivo() {
         return $this->enderecos()->where('principal', 1)->first()

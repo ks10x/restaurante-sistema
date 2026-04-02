@@ -32,6 +32,7 @@
     
     <!-- Chart.js (apenas para o dashboard) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @stack('styles')
 </head>
 <body class="h-full font-sans antialiased text-slate-900" x-data="{ sidebarOpen: false }">
 
@@ -160,6 +161,133 @@
         </main>
     </div>
 
+    @if(isset($adminNotifications) && $adminNotifications->isNotEmpty())
+    <div class="fixed top-20 right-4 z-[70] space-y-3 w-full max-w-sm" x-data="adminAlerts()">
+        @foreach($adminNotifications as $notification)
+        <div
+            x-show="visibleIds.includes({{ $notification->id }})"
+            x-transition
+            class="rounded-xl border border-red-200 bg-white/95 shadow-lg backdrop-blur p-4"
+        >
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5 h-10 w-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">!</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-slate-900">{{ $notification->titulo }}</p>
+                    <p class="mt-1 text-sm text-slate-600">{{ $notification->mensagem }}</p>
+                </div>
+                <button @click="dismiss({{ $notification->id }})" class="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
+    <div id="admin-confirm-modal" class="fixed inset-0 z-[80] hidden">
+        <div class="absolute inset-0 bg-slate-900/60"></div>
+        <div class="relative flex min-h-full items-center justify-center p-4">
+            <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="px-6 py-5">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 text-xl font-bold">!</div>
+                        <div class="flex-1">
+                            <h3 id="admin-confirm-title" class="text-lg font-bold text-slate-900">Confirmar ação</h3>
+                            <p id="admin-confirm-message" class="mt-2 text-sm text-slate-600">Tem certeza que deseja continuar?</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 bg-slate-50 px-6 py-4 border-t border-slate-100">
+                    <button id="admin-confirm-cancel" type="button" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg shadow-sm hover:bg-slate-50 transition-colors">Cancelar</button>
+                    <button id="admin-confirm-ok" type="button" class="px-5 py-2 bg-red-600 text-white font-bold rounded-lg shadow-sm hover:bg-red-700 transition-colors">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @stack('scripts')
+    <script>
+        (() => {
+            const modal = document.getElementById('admin-confirm-modal');
+            const titleEl = document.getElementById('admin-confirm-title');
+            const messageEl = document.getElementById('admin-confirm-message');
+            const confirmButton = document.getElementById('admin-confirm-ok');
+            const cancelButton = document.getElementById('admin-confirm-cancel');
+
+            if (!modal || !titleEl || !messageEl || !confirmButton || !cancelButton) {
+                return;
+            }
+
+            let resolver = null;
+
+            const close = (result) => {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+
+                if (resolver) {
+                    resolver(result);
+                    resolver = null;
+                }
+            };
+
+            confirmButton.addEventListener('click', () => close(true));
+            cancelButton.addEventListener('click', () => close(false));
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal || event.target === modal.firstElementChild) {
+                    close(false);
+                }
+            });
+
+            window.adminConfirm = function ({
+                title = 'Confirmar ação',
+                message = 'Tem certeza que deseja continuar?',
+                confirmText = 'Confirmar',
+                confirmClass = 'bg-red-600 hover:bg-red-700'
+            } = {}) {
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                confirmButton.textContent = confirmText;
+                confirmButton.className = `px-5 py-2 text-white font-bold rounded-lg shadow-sm transition-colors ${confirmClass}`;
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+
+                return new Promise((resolve) => {
+                    resolver = resolve;
+                });
+            };
+
+            window.adminConfirmSubmit = async function (event, options = {}) {
+                event.preventDefault();
+                const confirmed = await window.adminConfirm(options);
+
+                if (confirmed) {
+                    event.target.submit();
+                }
+
+                return false;
+            };
+        })();
+    </script>
+    @if(isset($adminNotifications) && $adminNotifications->isNotEmpty())
+    <script>
+        function adminAlerts() {
+            return {
+                visibleIds: @json($adminNotifications->pluck('id')->values()),
+                async dismiss(id) {
+                    this.visibleIds = this.visibleIds.filter((item) => item !== id);
+
+                    try {
+                        await fetch(`/admin/notificacoes/${id}/read`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            }
+                        });
+                    } catch (error) {
+                    }
+                }
+            }
+        }
+    </script>
+    @endif
 </body>
 </html>
