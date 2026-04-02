@@ -14,16 +14,16 @@ class CardapioController extends Controller
         $categorias = Categoria::where('ativa', 1)
             ->orderBy('ordem')
             ->with(['pratos' => function($q) {
-                // Ajustado: prato usa 'disponivel', não 'ativa'
-                $q->where('disponivel', 1)->orderBy('ordem');
+                $q->where('disponivel', 1)
+                  ->orderBy('ordem')
+                  ->with(['ingredientes', 'insumos']); // ← adicionado aqui
             }])
             ->get();
 
-        // Ajustado: nome da variável para bater com o compact
-       $destaques = Prato::where('disponivel', 1) 
-        ->where('destaque', 1)
-        ->with('categoria')
-        ->get();
+        $destaques = Prato::where('disponivel', 1) 
+            ->where('destaque', 1)
+            ->with('categoria')
+            ->get();
 
         $config = [
             'pedido_minimo' => 30,
@@ -31,9 +31,7 @@ class CardapioController extends Controller
             'tempo_estimado'=> 45,
         ];
 
-        // Agora 'destaques' (plural) existe e 'cliente.cardapio' é o seu arquivo
         return view('cliente.cardapio', compact('categorias', 'destaques', 'config'));
-
     }
     
     public function show(Prato $prato)
