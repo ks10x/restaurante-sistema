@@ -21,6 +21,8 @@ class DashboardController extends Controller
             'clientes_hoje'    => Pedido::whereDate('created_at',$hoje)->distinct('user_id')->count('user_id'),
             'cancelados_hoje'  => Pedido::whereDate('created_at',$hoje)->where('status','cancelado')->count(),
             'estoque_critico'  => Insumo::whereColumn('quantidade_atual','<=','quantidade_minima')->where('ativo',1)->count(),
+            'custo_total_estoque' => (float) Insumo::where('ativo', 1)->selectRaw('COALESCE(SUM(quantidade_atual * preco_unitario), 0) as total')->value('total'),
+            'pratos_comprometidos' => Prato::query()->whereNull('deleted_at')->comprometidos()->count(),
         ];
 
         $vendas7dias = DB::table('pedidos')
@@ -39,6 +41,32 @@ class DashboardController extends Controller
 
         $pedidosRecentes = Pedido::with(['usuario','itens'])->latest()->limit(8)->get();
 
-        return view('admin.dashboard', compact('kpis','vendas7dias','topPratos','pedidosRecentes'));
+        $ingredientesMaisUsados = DB::table('pedido_itens as pi')
+            ->join('pedidos as pd', 'pi.pedido_id', '=', 'pd.id')
+            ->join('prato_insumos as piv', 'pi.prato_id', '=', 'piv.prato_id')
+            ->join('insumos as i', 'piv.insumo_id', '=', 'i.id')
+            ->select(
+                'i.nome',
+                'i.unidade',
+                DB::raw('SUM(pi.quantidade * piv.quantidade) as consumo_estimado'),
+                DB::raw('SUM(pi.quantidade * piv.quantidade * i.preco_unitario) as custo_estimado')
+            )
+            ->where('pd.pagamento_status', 'aprovado')
+            ->whereDate('pd.created_at', '>=', now()->subDays(30))
+            ->groupBy('i.id', 'i.nome', 'i.unidade')
+            ->orderByDesc('consumo_estimado')
+            ->limit(5)
+            ->get();
+
+        $pratosComprometidos = Prato::query()
+            ->with(['categoria:id,nome', 'insumos' => function ($query) {
+                $query->whereColumn('insumos.quantidade_atual', '<=', 'insumos.quantidade_minima');
+            }])
+            ->whereNull('deleted_at')
+            ->comprometidos()
+            ->limit(6)
+            ->get();
+
+        return view('admin.dashboard', compact('kpis','vendas7dias','topPratos','pedidosRecentes', 'ingredientesMaisUsados', 'pratosComprometidos'));
     }
 }

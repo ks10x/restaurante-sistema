@@ -16,22 +16,24 @@ class RestauranteSeeder extends Seeder
     public function run(): void
     {
         // Usuário Admin padrão (senha: admin@123)
-        DB::table('users')->insert([
+        DB::table('users')->insertOrIgnore([
             'name' => 'Administrador',
             'email' => 'admin@restaurante.com',
-            'password' => Hash::make('admin@123'),
+            'password' => Hash::make('Admin@1234'),
             'role' => \App\Models\User::ROLE_ADMIN,
             'email_verified_at' => now(),
+            'status'    => 'ativo',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        DB::table('users')->insert([
+        DB::table('users')->insertOrIgnore([
             'name' => 'Cozinha Principal',
             'email' => 'cozinha@restaurante.com',
-            'password' => Hash::make('admin@123'),
+            'password' => Hash::make('Cozinha@1234'),
             'role' => \App\Models\User::ROLE_COZINHA,
             'email_verified_at' => now(),
+            'status'    => 'ativo',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

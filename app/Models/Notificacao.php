@@ -9,12 +9,16 @@ class Notificacao extends Model
 {
     use HasFactory;
 
+    protected $table = 'notificacoes';
+
     protected $fillable = [
-        'user_id', 'titulo', 'mensagem', 'tipo', 'lida'
+        'user_id', 'titulo', 'mensagem', 'tipo', 'dados', 'lida', 'lida_em'
     ];
 
     protected $casts = [
         'lida' => 'boolean',
+        'dados' => 'array',
+        'lida_em' => 'datetime',
     ];
 
     public function usuario()

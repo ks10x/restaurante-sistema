@@ -10,7 +10,7 @@
             <p class="mt-2 text-sm text-slate-600">Gerencie o acesso da sua equipe ao sistema.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex gap-3">
-            <button @click="openModal('create')" class="inline-flex items-center justify-center bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
+            <button @click="openModal('create')" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg shadow-md transition-all active:scale-95 text-sm ring-2 ring-blue-500 ring-offset-2">
                 + Novo Funcionário
             </button>
         </div>
@@ -25,6 +25,7 @@
                         <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">E-mail</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cargo / Nível</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Código (PIN)</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data de Cadastro</th>
                         <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
                     </tr>
@@ -54,6 +55,11 @@
                                 {{ $roleData[1] }}
                             </span>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200 text-xs font-mono font-bold">
+                                {{ $func->funcionario->codigo_identificacao ?? 'N/A' }}
+                            </span>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                             {{ $func->created_at->format('d/m/Y') }}
                         </td>
@@ -62,7 +68,7 @@
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
                             @if($func->id !== auth()->id())
-                            <form action="{{ route('admin.funcionarios.destroy', $func) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir permanentemente este funcionário?');">
+                            <form action="{{ route('admin.funcionarios.destroy', $func) }}" method="POST" class="inline-block" onsubmit="return adminConfirmSubmit(event, { title: 'Excluir funcionário', message: 'Tem certeza que deseja excluir permanentemente este funcionário?', confirmText: 'Excluir' });">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-slate-400 hover:text-red-600 transition-colors px-2" title="Remover Funcionário">
@@ -74,7 +80,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
                             Nenhum funcionário cadastrado.
                         </td>
                     </tr>

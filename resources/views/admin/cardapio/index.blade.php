@@ -54,6 +54,20 @@
             <div class="p-5 flex-1 flex flex-col">
                 <h3 class="text-lg font-bold text-slate-900 mb-1 leading-tight">{{ $prato->nome }}</h3>
                 <p class="text-sm text-slate-500 mb-4 line-clamp-2 flex-1">{{ $prato->descricao }}</p>
+                @if($prato->insumos->isNotEmpty())
+                <div class="mb-4 flex flex-wrap gap-2">
+                    @foreach($prato->insumos->take(3) as $insumo)
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                        {{ $insumo->nome }} • {{ number_format($insumo->pivot->quantidade, 3, ',', '.') }} {{ $insumo->unidade }}
+                    </span>
+                    @endforeach
+                    @if($prato->insumos->count() > 3)
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                        +{{ $prato->insumos->count() - 3 }} ingredientes
+                    </span>
+                    @endif
+                </div>
+                @endif
                 
                 <div class="flex items-end justify-between mt-auto">
                     <div>
@@ -130,6 +144,40 @@
                                 <input type="file" @change="handleFileDrop" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
                             </div>
 
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-sm font-semibold text-slate-700">Ingredientes vinculados</label>
+                                    <button type="button" @click="addInsumoRow()" class="text-sm font-semibold text-brand-600 hover:text-brand-700">+ adicionar</button>
+                                </div>
+
+                                <template x-if="formData.insumos.length === 0">
+                                    <div class="rounded-lg border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500">
+                                        Nenhum ingrediente vinculado ainda.
+                                    </div>
+                                </template>
+
+                                <div class="space-y-2" x-show="formData.insumos.length > 0">
+                                    <template x-for="(insumo, index) in formData.insumos" :key="`insumo-${index}`">
+                                        <div class="grid grid-cols-12 gap-2 items-center">
+                                            <div class="col-span-7">
+                                                <select x-model="insumo.id" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-900">
+                                                    <option value="">Selecione um ingrediente</option>
+                                                    @foreach($insumos as $insumo)
+                                                    <option value="{{ $insumo->id }}">{{ $insumo->nome }} ({{ $insumo->unidade }})</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-span-4">
+                                                <input type="number" step="0.001" min="0.001" x-model="insumo.quantidade" placeholder="Qtd." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm text-slate-900">
+                                            </div>
+                                            <div class="col-span-1 text-right">
+                                                <button type="button" @click="removeInsumoRow(index)" class="text-red-500 hover:text-red-700 font-bold">&times;</button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
                             <div class="flex items-center gap-2 pt-2">
                                 <input type="checkbox" x-model="formData.disponivel" id="dispToggle" class="rounded border-slate-300 text-brand-600 shadow-sm focus:border-brand-300 focus:ring focus:ring-brand-200 focus:ring-opacity-50">
                                 <label for="dispToggle" class="text-sm font-medium text-slate-700">Este prato deve aparecer visível no cardápio do cliente</label>
@@ -160,7 +208,8 @@ document.addEventListener('alpine:init', () => {
             categoria_id: '',
             preco: '',
             descricao: '',
-            disponivel: true
+            disponivel: true,
+            insumos: []
         },
 
         getDisponivelState(id, serverState) {
@@ -199,9 +248,21 @@ document.addEventListener('alpine:init', () => {
                 categoria_id: prato.categoria_id,
                 preco: prato.preco,
                 descricao: prato.descricao,
-                disponivel: !!prato.disponivel
+                disponivel: !!prato.disponivel,
+                insumos: (prato.insumos || []).map((insumo) => ({
+                    id: String(insumo.id),
+                    quantidade: insumo.pivot?.quantidade ?? ''
+                }))
             };
             this.isModalOpen = true;
+        },
+
+        addInsumoRow() {
+            this.formData.insumos.push({ id: '', quantidade: '' });
+        },
+
+        removeInsumoRow(index) {
+            this.formData.insumos.splice(index, 1);
         },
 
         handleFileDrop(event) {
@@ -210,7 +271,7 @@ document.addEventListener('alpine:init', () => {
 
         resetForm() {
             this.editingPrato = null;
-            this.formData = { nome: '', categoria_id: '', preco: '', descricao: '', disponivel: true };
+            this.formData = { nome: '', categoria_id: '', preco: '', descricao: '', disponivel: true, insumos: [] };
             this.imageFile = null;
             if(document.querySelector('input[type="file"]')) {
                 document.querySelector('input[type="file"]').value = '';
@@ -230,6 +291,13 @@ document.addEventListener('alpine:init', () => {
             payload.append('preco', this.formData.preco);
             payload.append('descricao', this.formData.descricao);
             payload.append('disponivel', this.formData.disponivel ? 1 : 0);
+
+            this.formData.insumos
+                .filter((insumo) => insumo.id && insumo.quantidade)
+                .forEach((insumo, index) => {
+                    payload.append(`insumos[${index}][id]`, insumo.id);
+                    payload.append(`insumos[${index}][quantidade]`, insumo.quantidade);
+                });
             
             if(this.imageFile) payload.append('imagem', this.imageFile);
 
@@ -239,6 +307,10 @@ document.addEventListener('alpine:init', () => {
                 if(response.ok) { window.location.reload(); }
                 else {
                     let err = await response.json();
+                    const validationErrors = err.errors
+                        ? Object.values(err.errors).flat().join('\n')
+                        : null;
+                    err.message = validationErrors || err.message;
                     alert(err.message || 'Verifique se os dados estão corretos.');
                 }
             } catch(e) {
@@ -249,7 +321,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         async deletePrato(id) {
-            if(!confirm('Exclusão CUIDADO: Este prato será excluido e poderá afetar histórico. Tem certeza?')) return;
+            const confirmed = await window.adminConfirm({
+                title: 'Excluir prato',
+                message: 'Este prato será excluído e pode afetar históricos e vínculos. Deseja continuar?',
+                confirmText: 'Excluir'
+            });
+
+            if(!confirmed) return;
             try {
                 let response = await fetch(`/admin/cardapio/${id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }});
                 if(response.ok) { window.location.reload(); }

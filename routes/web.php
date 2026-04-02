@@ -22,6 +22,7 @@ use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CardapioController as AdminCardapioController;
 use App\Http\Controllers\Admin\EstoqueController;
+use App\Http\Controllers\Admin\NotificacaoController as AdminNotificacaoController;
 
 // ─────────────────────────────────────────────────────────────
 // Controllers Cliente
@@ -155,6 +156,17 @@ Route::middleware(['auth', 'role:0,1'])
 
 
 // ═════════════════════════════════════════════════════════════
+// ENTREGADOR (role=3)
+// ═════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'role:0,3'])
+    ->prefix('entregador')
+    ->name('entregador.')
+    ->group(function () {
+        Route::get('/', fn() => 'Painel do Entregador (Em breve)')->name('index');
+    });
+
+
+// ═════════════════════════════════════════════════════════════
 // ADMIN (role=0)
 // ═════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'role:0'])
@@ -181,8 +193,13 @@ Route::middleware(['auth', 'role:0'])
         // Estoque
         Route::prefix('estoque')->name('estoque.')->group(function () {
             Route::get('/', [EstoqueController::class, 'index'])->name('index');
+            Route::post('/', [EstoqueController::class, 'store'])->name('store');
+            Route::put('/{insumo}', [EstoqueController::class, 'update'])->name('update');
+            Route::delete('/{insumo}', [EstoqueController::class, 'destroy'])->name('destroy');
             Route::post('/{insumo}/movimentar', [EstoqueController::class, 'movimentar'])->name('movimentar');
         });
+
+        Route::patch('/notificacoes/{notificacao}/read', [AdminNotificacaoController::class, 'markAsRead'])->name('notificacoes.read');
 
         // Funcionários
         Route::prefix('funcionarios')->name('funcionarios.')->group(function () {

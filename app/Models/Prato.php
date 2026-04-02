@@ -5,15 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
  
 class Prato extends Model
 {
     use HasFactory, SoftDeletes;
  
     protected $fillable = [
-        'categoria_id','nome','descricao','preco','preco_promocional',
+        'categoria_id','nome','slug','descricao','preco','preco_promocional',
         'imagem','imagens_extras','calorias','tempo_preparo','porcao',
-        'disponivel','destaque','ordem','avaliacao_media','total_avaliacoes',
+        'ativo','disponivel','destaque','ordem','avaliacao_media','total_avaliacoes',
     ];
  
     protected $casts = [
@@ -52,4 +53,10 @@ class Prato extends Model
     public function scopeDisponivel($q)  { return $q->where('disponivel', 1); }
     public function scopeDestaques($q)   { return $q->where('destaque', 1); }
     public function scopeByCategoria($q, $catId) { return $q->where('categoria_id', $catId); }
+    public function scopeComprometidos(Builder $query)
+    {
+        return $query->whereHas('insumos', function (Builder $subQuery) {
+            $subQuery->whereColumn('insumos.quantidade_atual', '<=', 'insumos.quantidade_minima');
+        });
+    }
 }

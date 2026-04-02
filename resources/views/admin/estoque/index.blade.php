@@ -10,19 +10,21 @@
             <p class="mt-2 text-sm text-slate-600">Monitore níveis de insumos e registre entradas ou saídas.</p>
         </div>
         <div class="mt-4 sm:mt-0">
-            <!-- Espaço para um futuro botão "Adicionar Novo Insumo" -->
+            <button @click="openInsumoModal()" class="inline-flex items-center justify-center bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
+                + Novo Ingrediente
+            </button>
         </div>
     </div>
 
     <!-- Cards de Resumo -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center">
             <div class="bg-brand-50 text-brand-600 rounded-lg p-3 mr-4">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500">Total de Insumos</p>
-                <p class="text-2xl font-bold text-slate-900">{{ $resumo['total'] }}</p>
+                <p class="text-2xl font-bold text-slate-900">{{ $resumo['total'] ?? 0 }}</p>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center">
@@ -31,7 +33,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500">Atenção / Crítico</p>
-                <p class="text-2xl font-bold text-slate-900">{{ $resumo['critico'] }}</p>
+                <p class="text-2xl font-bold text-slate-900">{{ $resumo['critico'] ?? 0 }}</p>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center">
@@ -40,7 +42,25 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500">Zerados</p>
-                <p class="text-2xl font-bold text-slate-900">{{ $resumo['zerado'] }}</p>
+                <p class="text-2xl font-bold text-slate-900">{{ $resumo['zerado'] ?? 0 }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center">
+            <div class="bg-emerald-50 text-emerald-600 rounded-lg p-3 mr-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.567-3 3.5S10.343 15 12 15s3-1.567 3-3.5S13.657 8 12 8zm0 0V5m0 10v4m7-7h-4M9 12H5"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-slate-500">Custo em Estoque</p>
+                <p class="text-2xl font-bold text-slate-900">R$ {{ number_format($resumo['custo_total'] ?? 0, 2, ',', '.') }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center">
+            <div class="bg-orange-50 text-orange-600 rounded-lg p-3 mr-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m6 0A10 10 0 11 2 14a10 10 0 0120 0z"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-slate-500">Pratos Comprometidos</p>
+                <p class="text-2xl font-bold text-slate-900">{{ $resumo['pratos_comprometidos'] ?? 0 }}</p>
             </div>
         </div>
     </div>
@@ -79,6 +99,11 @@
                                 {{ $badgeData[1] }}
                             </span>
                             <div class="text-xs text-slate-500">{{ $insumo->categoria ?? 'Geral' }}</div>
+                            @if($insumo->pratos->isNotEmpty())
+                            <div class="text-[11px] text-slate-400 mt-1">
+                                Vinculado a: {{ $insumo->pratos->pluck('nome')->take(2)->join(', ') }}{{ $insumo->pratos->count() > 2 ? ' +' . ($insumo->pratos->count() - 2) : '' }}
+                            </div>
+                            @endif
                         </td>
                         <td class="px-6 py-3 whitespace-nowrap">
                             <div class="text-sm font-bold text-slate-900">
@@ -87,7 +112,10 @@
                             <div class="text-xs text-slate-400">Restam {{ $insumo->percentual_estoque ?? 0 }}%</div>
                             @php $largura = min(100, max(0, $insumo->percentual_estoque ?? 0)); @endphp
                             <div class="w-24 h-1.5 bg-slate-200 rounded-full mt-1 overflow-hidden">
-                                <div class="h-full {{ ($insumo->nivel ?? '') == 'ok' ? 'bg-emerald-500' : (($insumo->nivel ?? '') == 'atencao' ? 'bg-amber-500' : 'bg-red-500') }}></div>
+                                <div
+                                    class="h-full {{ ($insumo->nivel ?? '') == 'ok' ? 'bg-emerald-500' : (($insumo->nivel ?? '') == 'atencao' ? 'bg-amber-500' : (($insumo->nivel ?? '') == 'critico' ? 'bg-orange-500' : 'bg-red-500')) }}"
+                                    style="width: {{ $largura }}%;"
+                                ></div>
                             </div>
                         </td>
                         <td class="px-6 py-3 whitespace-nowrap text-sm text-slate-600">
@@ -96,6 +124,12 @@
                         <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
                             <button @click="openMovimentacao({{ Js::from($insumo) }})" class="text-brand-600 hover:text-brand-900 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-md font-semibold transition-colors">
                                 Lançar
+                            </button>
+                            <button @click="openInsumoModal({{ Js::from($insumo) }})" class="ml-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-md font-semibold transition-colors">
+                                Editar
+                            </button>
+                            <button @click="deleteInsumo({{ $insumo->id }})" class="ml-2 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md font-semibold transition-colors">
+                                Excluir
                             </button>
                         </td>
                     </tr>
@@ -111,6 +145,80 @@
         </div>
         <div class="px-6 py-4 border-t border-slate-200">
             {{ $insumos->links() }}
+        </div>
+    </div>
+
+    <div x-show="isInsumoModalOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isInsumoModalOpen" x-transition.opacity class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity" @click="closeInsumoModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div x-show="isInsumoModalOpen" class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border-t-4 border-brand-500">
+                <form @submit.prevent="submitInsumo">
+                    <div class="px-6 py-5 bg-white">
+                        <h3 class="text-lg leading-6 font-bold text-slate-900 mb-4" x-text="editingInsumo ? 'Editar Ingrediente' : 'Novo Ingrediente'"></h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Nome*</label>
+                                <input type="text" x-model="insumoForm.nome" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Categoria</label>
+                                <input type="text" x-model="insumoForm.categoria" list="categorias-insumo" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                                <datalist id="categorias-insumo">
+                                    @foreach(($categorias ?? []) as $categoria)
+                                    <option value="{{ $categoria }}"></option>
+                                    @endforeach
+                                </datalist>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Unidade*</label>
+                                <select x-model="insumoForm.unidade" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                                    <option value="kg">kg</option>
+                                    <option value="g">g</option>
+                                    <option value="l">l</option>
+                                    <option value="ml">ml</option>
+                                    <option value="un">un</option>
+                                    <option value="cx">cx</option>
+                                    <option value="pct">pct</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Quantidade atual*</label>
+                                <input type="number" step="0.001" min="0" x-model="insumoForm.quantidade_atual" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Quantidade mínima*</label>
+                                <input type="number" step="0.001" min="0" x-model="insumoForm.quantidade_minima" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Preço unitário*</label>
+                                <input type="number" step="0.0001" min="0" x-model="insumoForm.preco_unitario" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Fornecedor</label>
+                                <input type="text" x-model="insumoForm.fornecedor" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Código de barras</label>
+                                <input type="text" x-model="insumoForm.codigo_barras" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">Descrição</label>
+                                <textarea rows="3" x-model="insumoForm.descricao" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 px-6 py-4 flex justify-between rounded-b-2xl border-t border-slate-100">
+                        <button type="button" @click="closeInsumoModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg shadow-sm hover:bg-slate-50 transition-colors">Cancelar</button>
+                        <button type="submit" class="px-6 py-2 bg-brand-600 text-white font-bold rounded-lg shadow-sm hover:bg-brand-700 transition-colors disabled:opacity-50" :disabled="isLoading">
+                            <span x-text="isLoading ? 'Salvando...' : 'Salvar ingrediente'"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -188,12 +296,48 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('estoqueManager', () => ({
         isModalOpen: false,
+        isInsumoModalOpen: false,
         selectedInsumo: null,
+        editingInsumo: null,
         isLoading: false,
         formData: {
             tipo: 'entrada',
             quantidade: '',
             observacoes: ''
+        },
+        insumoForm: {
+            nome: '',
+            descricao: '',
+            categoria: '',
+            unidade: 'un',
+            quantidade_atual: '',
+            quantidade_minima: '',
+            preco_unitario: '',
+            fornecedor: '',
+            codigo_barras: '',
+            ativo: true
+        },
+
+        openInsumoModal(insumo = null) {
+            this.editingInsumo = insumo?.id ?? null;
+            this.insumoForm = {
+                nome: insumo?.nome ?? '',
+                descricao: insumo?.descricao ?? '',
+                categoria: insumo?.categoria ?? '',
+                unidade: insumo?.unidade ?? 'un',
+                quantidade_atual: insumo?.quantidade_atual ?? '',
+                quantidade_minima: insumo?.quantidade_minima ?? '',
+                preco_unitario: insumo?.preco_unitario ?? '',
+                fornecedor: insumo?.fornecedor ?? '',
+                codigo_barras: insumo?.codigo_barras ?? '',
+                ativo: insumo?.ativo ?? true,
+            };
+            this.isInsumoModalOpen = true;
+        },
+
+        closeInsumoModal() {
+            this.isInsumoModalOpen = false;
+            this.editingInsumo = null;
         },
 
         openMovimentacao(insumo) {
@@ -204,6 +348,43 @@ document.addEventListener('alpine:init', () => {
 
         closeModal() {
             this.isModalOpen = false;
+        },
+
+        async submitInsumo() {
+            this.isLoading = true;
+
+            const payload = new FormData();
+            payload.append('_token', '{{ csrf_token() }}');
+            if (this.editingInsumo) payload.append('_method', 'PUT');
+
+            Object.entries(this.insumoForm).forEach(([key, value]) => {
+                payload.append(key, typeof value === 'boolean' ? (value ? 1 : 0) : value);
+            });
+
+            const url = this.editingInsumo ? `/admin/estoque/${this.editingInsumo}` : `/admin/estoque`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: payload
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                    return;
+                }
+
+                const err = await response.json();
+                const validationErrors = err.errors
+                    ? Object.values(err.errors).flat().join('\n')
+                    : null;
+                alert(validationErrors || err.message || 'Erro ao salvar ingrediente.');
+            } catch (e) {
+                alert('Erro de comunicação ao salvar o ingrediente.');
+            } finally {
+                this.isLoading = false;
+            }
         },
 
         async submitMovimentacao() {
@@ -228,12 +409,45 @@ document.addEventListener('alpine:init', () => {
                     window.location.reload();
                 } else {
                     let err = await response.json();
-                    alert(err.message || 'Erro ao registrar movimentação.');
+                    const validationErrors = err.errors
+                        ? Object.values(err.errors).flat().join('\n')
+                        : null;
+                    alert(validationErrors || err.message || 'Erro ao registrar movimentação.');
                 }
             } catch(e) {
                 alert('Erro fatal de comunicação.');
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        async deleteInsumo(id) {
+            const confirmed = await window.adminConfirm({
+                title: 'Excluir ingrediente',
+                message: 'Tem certeza que deseja excluir esse ingrediente? Essa ação não poderá ser desfeita.',
+                confirmText: 'Excluir'
+            });
+
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/admin/estoque/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                    return;
+                }
+
+                const err = await response.json();
+                alert(err.message || 'Não foi possível excluir o ingrediente.');
+            } catch (e) {
+                alert('Erro de comunicação ao excluir o ingrediente.');
             }
         }
     }));

@@ -6,13 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\{Prato, Categoria, Insumo};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
  
 class CardapioController extends Controller
 {
     public function index() {
-        $pratos = Prato::withTrashed()->with('categoria')->orderBy('categoria_id')->orderBy('ordem')->paginate(20);
+        $pratos = Prato::withTrashed()
+            ->with(['categoria', 'insumos:id,nome,unidade'])
+            ->orderBy('categoria_id')
+            ->orderBy('ordem')
+            ->paginate(20);
         $categorias = Categoria::orderBy('ordem')->get();
-        return view('admin.cardapio.index', compact('pratos', 'categorias'));
+        $insumos = Insumo::ativos()->orderBy('nome')->get(['id', 'nome', 'unidade', 'categoria']);
+
+        return view('admin.cardapio.index', compact('pratos', 'categorias', 'insumos'));
     }
  
     public function store(Request $request)
@@ -31,7 +38,11 @@ class CardapioController extends Controller
             'destaque'         => 'boolean',
             'ingredientes'     => 'nullable|array',
             'insumos'          => 'nullable|array',
+            'insumos.*.id'     => 'required_with:insumos|exists:insumos,id',
+            'insumos.*.quantidade' => 'required_with:insumos|numeric|min:0.001',
         ]);
+
+        $data['slug'] = $this->generateUniqueSlug($data['nome']);
  
         if ($request->hasFile('imagem')) {
             $data['imagem'] = $request->file('imagem')->store('pratos', 'public');
@@ -43,11 +54,9 @@ class CardapioController extends Controller
             $prato->ingredientes()->createMany($request->ingredientes);
         }
  
-        if ($request->insumos) {
-            $prato->insumos()->sync($request->insumos);
-        }
+        $this->syncInsumos($prato, $request->input('insumos', []));
  
-        return response()->json(['success' => true, 'prato' => $prato->load('categoria')]);
+        return response()->json(['success' => true, 'prato' => $prato->load(['categoria', 'insumos'])]);
     }
  
     public function update(Request $request, Prato $prato) {
@@ -58,12 +67,30 @@ class CardapioController extends Controller
             'descricao'        => 'sometimes|string',
             'preco'            => 'sometimes|numeric|min:0.01',
             'preco_promocional'=> 'nullable|numeric|min:0',
+            'imagem'           => 'nullable|image|max:2048',
             'disponivel'       => 'sometimes|boolean',
             'destaque'         => 'sometimes|boolean',
+            'insumos'          => 'nullable|array',
+            'insumos.*.id'     => 'required_with:insumos|exists:insumos,id',
+            'insumos.*.quantidade' => 'required_with:insumos|numeric|min:0.001',
         ]);
  
+        if (array_key_exists('nome', $data) && $data['nome'] !== $prato->nome) {
+            $data['slug'] = $this->generateUniqueSlug($data['nome'], $prato->id);
+        }
+
+        if ($request->hasFile('imagem')) {
+            if ($prato->imagem) {
+                Storage::disk('public')->delete($prato->imagem);
+            }
+
+            $data['imagem'] = $request->file('imagem')->store('pratos', 'public');
+        }
+
         $prato->update($data);
-        return response()->json(['success' => true, 'prato' => $prato->fresh('categoria')]);
+        $this->syncInsumos($prato, $request->input('insumos', []));
+
+        return response()->json(['success' => true, 'prato' => $prato->fresh(['categoria', 'insumos'])]);
     }
  
     public function toggleDisponivel(Prato $prato) {
@@ -74,5 +101,36 @@ class CardapioController extends Controller
     public function destroy(Prato $prato) {
         $prato->delete(); // soft delete
         return response()->json(['success' => true]);
+    }
+
+    private function generateUniqueSlug(string $nome, ?int $ignoreId = null): string
+    {
+        $baseSlug = Str::slug($nome) ?: 'prato';
+        $slug = $baseSlug;
+        $suffix = 2;
+
+        while (
+            Prato::withTrashed()
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->where('slug', $slug)
+                ->exists()
+        ) {
+            $slug = "{$baseSlug}-{$suffix}";
+            $suffix++;
+        }
+
+        return $slug;
+    }
+
+    private function syncInsumos(Prato $prato, array $insumos): void
+    {
+        $syncData = collect($insumos)
+            ->filter(fn ($insumo) => filled($insumo['id'] ?? null) && filled($insumo['quantidade'] ?? null))
+            ->mapWithKeys(fn ($insumo) => [
+                $insumo['id'] => ['quantidade' => $insumo['quantidade']],
+            ])
+            ->all();
+
+        $prato->insumos()->sync($syncData);
     }
 }

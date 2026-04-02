@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Funcionario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,7 @@ class FuncionarioController extends Controller
     public function index()
     {
         // 0 = Admin, 1 = Cozinha, 3 = Entregador. Rejeitamos 2 (Clientes)
-        $funcionarios = User::whereIn('role', [0, 1, 3])->orderBy('id', 'desc')->paginate(20);
+        $funcionarios = User::with('funcionario')->whereIn('role', [0, 1, 3])->orderBy('id', 'desc')->paginate(20);
         return view('admin.funcionarios', compact('funcionarios'));
     }
 
@@ -26,11 +27,21 @@ class FuncionarioController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'role' => (int) $request->role,
-            'password' => Hash::make($request->password),
+            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+        ]);
+
+        // Gera um código único de 6 dígitos
+        do {
+            $codigo = (string) mt_rand(100000, 999999);
+        } while (Funcionario::where('codigo_identificacao', $codigo)->exists());
+
+        Funcionario::create([
+            'user_id' => $user->id,
+            'codigo_identificacao' => $codigo,
         ]);
 
         return redirect()->back()->with('success', 'Funcionário cadastrado com sucesso!');

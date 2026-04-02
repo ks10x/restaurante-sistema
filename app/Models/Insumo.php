@@ -3,6 +3,7 @@
 namespace App\Models;
  
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
  
 class Insumo extends Model
 {
@@ -14,6 +15,7 @@ class Insumo extends Model
     protected $casts = [
         'quantidade_atual'  => 'decimal:3',
         'quantidade_minima' => 'decimal:3',
+        'quantidade_maxima' => 'decimal:3',
         'preco_unitario'    => 'decimal:4',
         'ativo'             => 'boolean',
     ];
@@ -24,6 +26,16 @@ class Insumo extends Model
  
     public function pratos() {
         return $this->belongsToMany(Prato::class, 'prato_insumos')->withPivot('quantidade');
+    }
+
+    public function scopeAtivos(Builder $query): Builder
+    {
+        return $query->where('ativo', true);
+    }
+
+    public function scopeCriticos(Builder $query): Builder
+    {
+        return $query->whereColumn('quantidade_atual', '<=', 'quantidade_minima');
     }
  
     public function getNivelAttribute(): string {
@@ -36,6 +48,16 @@ class Insumo extends Model
     public function getPercentualEstoqueAttribute(): float {
         if ($this->quantidade_minima == 0) return 100;
         return round(($this->quantidade_atual / $this->quantidade_minima) * 100, 1);
+    }
+
+    public function getAbaixoDoMinimoAttribute(): bool
+    {
+        return (float) $this->quantidade_atual <= (float) $this->quantidade_minima;
+    }
+
+    public function getCustoTotalEstoqueAttribute(): float
+    {
+        return round((float) $this->quantidade_atual * (float) $this->preco_unitario, 2);
     }
  
     public function movimentar(string $tipo, float $quantidade, int $userId, array $extra = []): EstoqueMovimentacao {
