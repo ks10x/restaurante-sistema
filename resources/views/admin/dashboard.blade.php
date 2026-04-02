@@ -129,7 +129,7 @@ body {
 }
 
 /* ─── PAGE ─── */
-.page { padding: 36px; display: flex; flex-direction: column; gap: 28px; flex: 1; }
+.page { padding: 40px; display: flex; flex-direction: column; gap: 56px; flex: 1; }
 
 /* ─── ALERT BANNER ─── */
 .alert-banner {
@@ -158,8 +158,8 @@ body {
 .alert-close:hover { color: var(--text); }
 
 /* ─── KPI GRIDS ─── */
-.kpi-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.kpi-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.kpi-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 2% }
+.kpi-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 2%;}
 
 .kpi {
   background: var(--bg2); border: 1px solid var(--border);
@@ -215,6 +215,7 @@ body {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: var(--r); overflow: hidden;
   box-shadow: 0 1px 4px rgba(15,40,100,0.04);
+  margin-top: 5%;
 }
 .panel-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -237,9 +238,9 @@ body {
 .chart-area { height: 210px; position: relative; }
 
 /* ─── GRID LAYOUTS ─── */
-.row-chart { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
-.row-mid   { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.row-bot   { display: grid; grid-template-columns: 1fr 370px; gap: 20px; }
+.row-chart { display: grid; grid-template-columns: 1fr 320px; gap: 28px; }
+.row-mid   { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.row-bot   { display: grid; grid-template-columns: 1fr 370px; gap: 28px; }
 
 /* ─── RANK LIST ─── */
 .rank-list { display: flex; flex-direction: column; gap: 13px; }
