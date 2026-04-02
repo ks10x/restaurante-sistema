@@ -9,7 +9,7 @@
     </p>
 
     <div style="display: inline-flex; flex-direction: column; gap: 20px; min-width: 300px;">
-        <a href="{{ route('orders.index') }}" style="background: var(--amber); color: var(--dark); padding: 18px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: 0.3s;">
+        <a href="{{ route('cliente.pedidos') }}" style="background: var(--amber); color: var(--dark); padding: 18px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: 0.3s;">
             <i class="fas fa-motorcycle"></i> Acompanhar Entrega
         </a>
         <a href="{{ route('cardapio.index') }}" style="color: var(--text-m); text-decoration: none; font-size: 0.9rem;">

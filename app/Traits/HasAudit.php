@@ -30,15 +30,19 @@ trait HasAudit
         $old = $oldValues ? array_diff_key($oldValues, array_flip($hidden)) : null;
         $new = $newValues ? array_diff_key($newValues, array_flip($hidden)) : null;
 
-        AuditLog::create([
-            'user_id'    => auth()->id(),
-            'event_type' => $type,
-            'table_name' => $model->getTable(),
-            'record_id'  => $model->getKey(),
-            'old_values' => $old,
-            'new_values' => $new,
-            'ip_address' => Request::ip(),
-            'user_agent' => Request::userAgent(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id'    => auth()->id(),
+                'event_type' => $type,
+                'table_name' => $model->getTable(),
+                'record_id'  => $model->getKey(),
+                'old_values' => $old,
+                'new_values' => $new,
+                'ip_address' => Request::ip(),
+                'user_agent' => Request::userAgent(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Audit log failed: ' . $e->getMessage());
+        }
     }
 }

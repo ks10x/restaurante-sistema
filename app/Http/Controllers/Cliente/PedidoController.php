@@ -16,14 +16,7 @@ class PedidoController extends Controller
         return view('cliente.carrinho');
     }
  
-    public function checkout() {
-        $enderecos = Auth::user()->enderecos()->get();
-        $config = [
-            'taxa_entrega' => config_val('taxa_entrega_padrao', 8),
-            'pedido_minimo' => config_val('pedido_minimo', 30),
-        ];
-        return view('cliente.checkout', compact('enderecos', 'config'));
-    }
+
  
     public function store(Request $request)
     {
@@ -55,11 +48,32 @@ class PedidoController extends Controller
             ->with(['itens.prato', 'endereco', 'historico'])
             ->firstOrFail();
  
-        return view('cliente.acompanhar', compact('pedido'));
+        return view('cliente.acompanharPedido', compact('pedido'));
+    }
+
+    /**
+     * Payment page (PIX QR code display)
+     */
+    public function pagamento(string $codigo) {
+        $pedido = Pedido::where('codigo', $codigo)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+        
+        // If already paid, redirect to tracking
+        if ($pedido->pagamento_status === 'aprovado') {
+            return redirect()->route('cliente.pedido.acompanhar', $pedido->codigo);
+        }
+
+        $pixCode = $pedido->pagamento_ref ? '' : '';
+        $expiresAt = now()->addHour()->toIso8601String();
+
+        return view('cliente.pagamento', compact('pedido', 'pixCode', 'expiresAt'));
     }
  
     public function historico() {
-        $pedidos = Auth::user()->pedidos()
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $pedidos = $user->pedidos()
             ->with('itens')
             ->latest()
             ->paginate(10);
@@ -72,12 +86,13 @@ class PedidoController extends Controller
             ->firstOrFail();
  
         return response()->json([
-            'status'      => $pedido->status,
-            'status_label'=> $pedido->status_label,
-            'confirmado_em'=> $pedido->confirmado_em?->format('H:i'),
-            'producao_em'  => $pedido->producao_em?->format('H:i'),
-            'saiu_em'      => $pedido->saiu_em?->format('H:i'),
-            'entregue_em'  => $pedido->entregue_em?->format('H:i'),
+            'status'           => $pedido->status,
+            'status_label'     => $pedido->status_label,
+            'pagamento_status' => $pedido->pagamento_status,
+            'confirmado_em'    => $pedido->confirmado_em?->format('H:i'),
+            'producao_em'      => $pedido->producao_em?->format('H:i'),
+            'saiu_em'          => $pedido->saiu_em?->format('H:i'),
+            'entregue_em'      => $pedido->entregue_em?->format('H:i'),
         ]);
     }
 }

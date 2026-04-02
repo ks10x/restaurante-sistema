@@ -1,62 +1,144 @@
 <?php
 
-namespace App\Http\Controllers\Cliente; // Define que está na subpasta Cliente
+namespace App\Http\Controllers\Cliente;
 
 use App\Http\Controllers\Controller;
+use App\Models\{Pedido, Prato, Endereco, User};
+use App\Services\PagarmeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
     public function index()
     {
-        // Aqui você retornará a view de checkout
-        return view('checkout.index');
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $enderecos = $user->enderecos;
+        $config = [
+            'taxa_entrega'  => 5.00,
+            'pedido_minimo' => (float) config_val('pedido_minimo', 30),
+            'desconto_pix'  => 5, // 5% discount for PIX
+        ];
+        return view('cliente.checkout', compact('enderecos', 'config'));
     }
 
-    public function processarPagamento(Request $request) 
-{
-    $pagarme = new \PagarMe\Client('SUA_API_KEY_AQUI');
+    /**
+     * Store a new address inline from checkout
+     */
+    public function salvarEndereco(Request $request)
+    {
+        $request->validate([
+            'cep'         => 'required|string|max:10',
+            'logradouro'  => 'required|string|max:180',
+            'numero'      => 'required|string|max:20',
+            'complemento' => 'nullable|string|max:80',
+            'bairro'      => 'required|string|max:80',
+            'cidade'      => 'required|string|max:80',
+            'estado'      => 'required|string|max:2',
+        ]);
 
-    $transaction = $pagarme->transactions()->create([
-        'amount' => $request->total * 100, // Valor em centavos
-        'payment_method' => 'pix',
-        'postback_url' => route('webhook.pagarme'), // Onde o Pagar.me avisa se pagou
-        'customer' => [
-            'name' => auth()->user()->name,
-            'email' => auth()->user()->email,
-            'type' => 'individual',
-            'country' => 'br',
-            'documents' => [
-                [
-                    'type' => 'cpf',
-                    'number' => '00000000000' // Pegar do perfil do usuário
-                ]
-            ]
-        ]
-    ]);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
-    // Dentro do método de processar pagamento no CheckoutController
-$order = Order::create([
-    'user_id' => auth()->id(),
-    'id_unico' => 'PED-' . strtoupper(uniqid()),
-    'valor_total' => $totalCarrinho,
-    'metodo_pagamento' => 'pix',
-    'endereco_entrega' => auth()->user()->address,
-    'status' => 'pedido enviado'
-]);
+        $endereco = $user->enderecos()->create([
+            'cep'         => $request->cep,
+            'logradouro'  => $request->logradouro,
+            'numero'      => $request->numero,
+            'complemento' => $request->complemento,
+            'bairro'      => $request->bairro,
+            'cidade'      => $request->cidade,
+            'uf'          => $request->estado,
+            'principal'   => $user->enderecos()->count() === 0,
+        ]);
 
-foreach ($carrinho as $item) {
-    OrderItem::create([
-        'order_id' => $order->id,
-        'produto_nome' => $item->name,
-        'quantidade' => $item->quantity,
-        'preco_unitario' => $item->price,
-        'subtotal' => $item->quantity * $item->price
-    ]);
-}
+        return response()->json([
+            'success'  => true,
+            'endereco' => $endereco,
+        ]);
+    }
 
-    // Se for PIX, o Pagar.me retorna o 'pix_qr_code' e a 'pix_expiration_date'
-    return view('checkout.sucesso', ['qr_code' => $transaction->pix_qr_code]);
-}
+    /**
+     * Process checkout: create Pedido + call Pagar.me for PIX
+     */
+    public function processarPagamento(Request $request, PagarmeService $pagarme)
+    {
+        $request->validate([
+            'itens'            => 'required|array|min:1',
+            'itens.*.prato_id' => 'required|integer',
+            'itens.*.qtd'      => 'required|integer|min:1',
+            'itens.*.preco'    => 'required|numeric|min:0',
+            'endereco_id'      => 'required|exists:enderecos,id',
+            'tipo_entrega'     => 'required|in:entrega,retirada',
+            'pagamento_metodo' => 'required|in:pix',
+            'observacoes'      => 'nullable|string|max:500',
+        ]);
+
+        $user = Auth::user();
+
+        return DB::transaction(function () use ($request, $user, $pagarme) {
+            $itens = collect($request->itens);
+            $subtotal = 0;
+
+            // Validate items and compute subtotal from DB prices (security)
+            $itensPronto = $itens->map(function ($item) use (&$subtotal) {
+                $prato = Prato::findOrFail($item['prato_id']);
+                abort_if(!$prato->disponivel, 422, "Prato {$prato->nome} indisponível.");
+
+                $preco = $prato->preco_ativo;
+                $itemTotal = $preco * $item['qtd'];
+                $subtotal += $itemTotal;
+
+                return [
+                    'prato_id'       => $prato->id,
+                    'preco_unitario' => $preco,
+                    'quantidade'     => $item['qtd'],
+                ];
+            });
+
+            $taxaEntrega = ($request->tipo_entrega === 'entrega')
+                ? 5.00
+                : 0;
+
+            // PIX discount (5%)
+            $descontoPix = round($subtotal * 0.05, 2);
+            $total = max(0, $subtotal + $taxaEntrega - $descontoPix);
+
+            $pedido = Pedido::create([
+                'user_id'          => $user->id,
+                'endereco_id'      => $request->endereco_id,
+                'tipo_entrega'     => $request->tipo_entrega,
+                'status'           => 'aguardando_pagamento',
+                'subtotal'         => $subtotal,
+                'taxa_entrega'     => $taxaEntrega,
+                'desconto'         => $descontoPix,
+                'total'            => $total,
+                'pagamento_metodo' => 'pix',
+                'pagamento_status' => 'pendente',
+                'observacoes'      => $request->observacoes,
+                'tempo_estimado'   => (int) config_val('tempo_estimado_entrega', 45),
+            ]);
+
+            $pedido->itens()->createMany($itensPronto->toArray());
+
+            // Status history
+            $pedido->historico()->create([
+                'status'  => 'aguardando_pagamento',
+                'user_id' => $user->id,
+            ]);
+
+            // Call Pagar.me to generate PIX
+            $pedido->load('itens.prato');
+            $pixData = $pagarme->criarPedidoPix($pedido, $user);
+
+            return response()->json([
+                'success'  => true,
+                'codigo'   => $pedido->codigo,
+                'redirect' => route('cliente.pedido.pagamento', $pedido->codigo),
+                'pix'      => $pixData,
+            ]);
+        });
+    }
 }

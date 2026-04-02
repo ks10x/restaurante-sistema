@@ -42,7 +42,7 @@ class PedidoService
             }
  
             $taxaEntrega = ($dados['tipo_entrega'] === 'entrega')
-                ? (float) config_val('taxa_entrega_padrao', 8)
+                ? 5.00
                 : 0;
  
             $total = max(0, $subtotal + $taxaEntrega - $desconto);
@@ -91,7 +91,7 @@ class PedidoService
         return match($cupom->tipo) {
             'percentual'  => round($subtotal * ($cupom->valor / 100), 2),
             'fixo'        => min($cupom->valor, $subtotal),
-            'frete_gratis'=> (float) config_val('taxa_entrega_padrao', 8),
+            'frete_gratis'=> 5.00,
             default       => 0,
         };
     }

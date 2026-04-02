@@ -10,19 +10,19 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        $nonce = base64_encode(random_bytes(16));
+        view()->share('csp_nonce', $nonce);
+
         $response = $next($request);
 
         if (method_exists($response, 'header')) {
-            $nonce = base64_encode(random_bytes(16));
-            view()->share('csp_nonce', $nonce);
-
             // Em desenvolvimento: CSP permissiva para CDNs. Em produção, compilar assets localmente.
             $csp = implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+                "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdnjs.cloudflare.com",
                 "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-                "img-src 'self' data: blob: https://ui-avatars.com https://lh3.googleusercontent.com",
+                "img-src 'self' data: blob: https://images.unsplash.com https://ui-avatars.com https://lh3.googleusercontent.com",
                 "connect-src 'self'",
                 "frame-ancestors 'none'",
             ]);

@@ -114,9 +114,11 @@ Route::middleware(['auth', 'role:0,2'])->group(function () {
     Route::get('/carrinho', [PedidoController::class, 'carrinho'])->name('cliente.carrinho');
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('cliente.checkout');
     Route::post('/checkout/pagar', [CheckoutController::class, 'processarPagamento'])->name('cliente.checkout.pagar');
+    Route::post('/enderecos', [CheckoutController::class, 'salvarEndereco'])->name('cliente.enderecos.store');
 
     // Pedidos
     Route::post('/pedidos', [PedidoController::class, 'store'])->name('cliente.pedido.store');
+    Route::get('/pedidos/{codigo}/pagamento', [PedidoController::class, 'pagamento'])->name('cliente.pedido.pagamento');
     Route::get('/pedidos/{codigo}/acompanhar', [PedidoController::class, 'acompanhar'])->name('cliente.pedido.acompanhar');
     Route::get('/pedidos/{codigo}/status', [PedidoController::class, 'statusApi'])->name('cliente.pedido.status-api');
     Route::get('/meus-pedidos', [PedidoController::class, 'historico'])->name('cliente.pedidos');
@@ -125,6 +127,9 @@ Route::middleware(['auth', 'role:0,2'])->group(function () {
     Route::get('/perfil', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/perfil', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/perfil', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Configurações do Cliente
+    Route::get('/configuracoes', fn() => view('cliente.configuracoes'))->name('cliente.configuracoes');
 
     // LGPD
     Route::prefix('privacidade')->name('lgpd.')->group(function () {
@@ -180,14 +185,27 @@ Route::middleware(['auth', 'role:0'])
             Route::delete('/{prato}', [AdminCardapioController::class, 'destroy'])->name('destroy');
         });
 
+        // Pedidos
+        Route::get('/pedidos', [\App\Http\Controllers\Admin\PedidoController::class, 'index'])->name('pedidos.index');
+        Route::patch('/pedidos/{pedido}/status', [\App\Http\Controllers\Admin\PedidoController::class, 'updateStatus'])->name('pedidos.updateStatus');
+
         // Estoque
         Route::prefix('estoque')->name('estoque.')->group(function () {
             Route::get('/', [EstoqueController::class, 'index'])->name('index');
             Route::post('/{insumo}/movimentar', [EstoqueController::class, 'movimentar'])->name('movimentar');
         });
 
-        // Configurações (placeholder — controller ainda não criado)
-        Route::get('/configuracoes', fn() => view('admin.configuracoes.index'))->name('configuracoes.index');
+        // Funcionários
+        Route::prefix('funcionarios')->name('funcionarios.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\FuncionarioController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\FuncionarioController::class, 'store'])->name('store');
+            Route::put('/{user}', [\App\Http\Controllers\Admin\FuncionarioController::class, 'update'])->name('update');
+            Route::delete('/{user}', [\App\Http\Controllers\Admin\FuncionarioController::class, 'destroy'])->name('destroy');
+        });
+
+        // Configurações
+        Route::get('/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'index'])->name('configuracoes.index');
+        Route::post('/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'store'])->name('configuracoes.store');
     });
 
 
