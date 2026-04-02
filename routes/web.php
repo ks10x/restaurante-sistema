@@ -150,6 +150,17 @@ Route::middleware(['auth', 'role:0,1'])
 
 
 // ═════════════════════════════════════════════════════════════
+// ENTREGADOR (role=3)
+// ═════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'role:0,3'])
+    ->prefix('entregador')
+    ->name('entregador.')
+    ->group(function () {
+        Route::get('/', fn() => 'Painel do Entregador (Em breve)')->name('index');
+    });
+
+
+// ═════════════════════════════════════════════════════════════
 // ADMIN (role=0)
 // ═════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'role:0'])
