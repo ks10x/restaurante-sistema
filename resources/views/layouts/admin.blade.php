@@ -29,6 +29,7 @@
     
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
     
     <!-- Chart.js (apenas para o dashboard) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

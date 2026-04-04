@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Redefinir Senha — BellaCucina</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { background-color: #F8FAFC; font-family: 'DM Sans', sans-serif; }

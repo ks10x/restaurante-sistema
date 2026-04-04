@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
 
     <style>
         :root {
@@ -113,7 +114,7 @@
 
 <div class="track-header">
     <a href="{{ route('cardapio.index') }}">
-        <i class="fas fa-arrow-left"></i> Cardápio
+        <i class="fas fa-arrow-left"></i> CardÃ¡pio
     </a>
     <div class="logo">Bella<span>Cucina</span></div>
     <a href="{{ route('cliente.pedidos') }}">
@@ -125,7 +126,7 @@
     @php
         $steps = [
             ['key' => 'confirmado',      'label' => 'Pedido Confirmado',    'icon' => 'fa-check',       'time' => $pedido->confirmado_em],
-            ['key' => 'em_producao',     'label' => 'Em Produção',         'icon' => 'fa-fire',        'time' => $pedido->producao_em],
+            ['key' => 'em_producao',     'label' => 'Em ProduÃ§Ã£o',         'icon' => 'fa-fire',        'time' => $pedido->producao_em],
             ['key' => 'saindo_entrega',  'label' => 'Saindo para Entrega', 'icon' => 'fa-motorcycle',  'time' => $pedido->saiu_em],
             ['key' => 'entregue',        'label' => 'Entregue',            'icon' => 'fa-home',        'time' => $pedido->entregue_em],
         ];
@@ -135,7 +136,7 @@
         $statusLabels = [
             'aguardando_pagamento' => 'Aguardando Pagamento',
             'confirmado' => 'Pedido Confirmado',
-            'em_producao' => 'Em Produção',
+            'em_producao' => 'Em ProduÃ§Ã£o',
             'saindo_entrega' => 'Saindo para Entrega',
             'entregue' => 'Entregue!',
             'cancelado' => 'Cancelado',
@@ -224,7 +225,7 @@
     <!-- ADDRESS -->
     @if($pedido->endereco)
         <div class="section">
-            <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> Endereço de Entrega</h2>
+            <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> EndereÃ§o de Entrega</h2>
             <div class="address-box">
                 <i class="fas fa-map-pin"></i>
                 <div class="address-box-text">
@@ -252,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusLabels = {
         'aguardando_pagamento': 'Aguardando Pagamento',
         'confirmado': 'Pedido Confirmado',
-        'em_producao': 'Em Produção',
+        'em_producao': 'Em ProduÃ§Ã£o',
         'saindo_entrega': 'Saindo para Entrega',
         'entregue': 'Entregue!',
     };

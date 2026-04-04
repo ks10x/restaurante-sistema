@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
 
     <style>
         :root {
@@ -117,7 +118,7 @@
 
     <div class="pix-card">
         <h1 class="pix-title">Pagamento via PIX</h1>
-        <p class="pix-subtitle">Escaneie o QR Code ou copie o código abaixo</p>
+        <p class="pix-subtitle">Escaneie o QR Code ou copie o cÃ³digo abaixo</p>
 
         <div class="qr-wrapper" id="qrWrapper">
             <canvas id="qrCanvas"></canvas>
@@ -131,7 +132,7 @@
         <div class="copy-section">
             <div class="copy-code" id="pixCode">Carregando...</div>
             <button class="btn-copy" id="btnCopy">
-                <i class="fas fa-copy"></i> Copiar Código PIX
+                <i class="fas fa-copy"></i> Copiar CÃ³digo PIX
             </button>
         </div>
     </div>
@@ -157,7 +158,7 @@
     <div class="paid-card">
         <div class="paid-icon"><i class="fas fa-check"></i></div>
         <h2 style="font-family: var(--font-h); font-size: 1.5rem; margin-bottom: 0.5rem;">Pagamento Confirmado!</h2>
-        <p style="color: var(--text-m);">Seu pedido já está sendo preparado.</p>
+        <p style="color: var(--text-m);">Seu pedido jÃ¡ estÃ¡ sendo preparado.</p>
         <a href="{{ route('cliente.pedido.acompanhar', $pedido->codigo) }}" class="btn-track">
             <i class="fas fa-route" style="margin-right: 8px;"></i> Acompanhar Pedido
         </a>
@@ -186,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         QRCode.toCanvas(canvas, pixCode, { width: 220, margin: 2, color: { dark: '#0F172A', light: '#FFFFFF' } }, function(err) {
             if (err) {
                 console.error('QR Code error:', err);
-                document.getElementById('qrWrapper').innerHTML = '<p style="padding: 2rem; color: var(--text-m);">Use o código copia e cola abaixo</p>';
+                document.getElementById('qrWrapper').innerHTML = '<p style="padding: 2rem; color: var(--text-m);">Use o cÃ³digo copia e cola abaixo</p>';
             }
         });
     }
@@ -198,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.innerHTML = '<i class="fas fa-check"></i> Copiado!';
             setTimeout(() => {
                 this.classList.remove('copied');
-                this.innerHTML = '<i class="fas fa-copy"></i> Copiar Código PIX';
+                this.innerHTML = '<i class="fas fa-copy"></i> Copiar CÃ³digo PIX';
             }, 3000);
         });
     });

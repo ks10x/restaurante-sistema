@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
     <style>
         :root {
             --navy: #1E3A8A;
@@ -267,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 <div class="section"><h2 class="section-title"><i class="fas fa-comment-alt"></i> Observacoes</h2><textarea class="notes-field" id="orderNotes" placeholder="Ex: sem cebola, ponto da carne..."></textarea></div>
             </div>
-            <div><div class="section sidebar-summary"><h2 class="section-title"><i class="fas fa-receipt"></i> Total</h2><div class="summary-row"><span>Subtotal</span><span>R$ ${money(subtotal)}</span></div><div class="summary-row"><span>Taxa de Entrega</span><span>R$ ${money(taxa)}</span></div>${desconto > 0 ? `<div class="summary-row discount"><span>Desconto PIX (${config.desconto_pix}%)</span><span>- R$ ${money(desconto)}</span></div>` : ''}<hr class="summary-divider"><div class="summary-total"><span>Total</span><span>R$ ${money(total)}</span></div><button class="btn-confirm" id="btnConfirm" type="button" ${!selectedEnderecoId ? 'disabled' : ''}><span class="label"><i class="fas fa-lock" style="margin-right: 8px;"></i> Confirmar Pedido</span><span class="spinner"><i class="fas fa-spinner fa-spin"></i> Processando...</span></button><div class="secure-badge"><i class="fas fa-shield-alt"></i> Ambiente seguro · Pagar.me</div></div></div>
+            <div><div class="section sidebar-summary"><h2 class="section-title"><i class="fas fa-receipt"></i> Total</h2><div class="summary-row"><span>Subtotal</span><span>R$ ${money(subtotal)}</span></div><div class="summary-row"><span>Taxa de Entrega</span><span>R$ ${money(taxa)}</span></div>${desconto > 0 ? `<div class="summary-row discount"><span>Desconto PIX (${config.desconto_pix}%)</span><span>- R$ ${money(desconto)}</span></div>` : ''}<hr class="summary-divider"><div class="summary-total"><span>Total</span><span>R$ ${money(total)}</span></div><button class="btn-confirm" id="btnConfirm" type="button" ${!selectedEnderecoId ? 'disabled' : ''}><span class="label"><i class="fas fa-lock" style="margin-right: 8px;"></i> Confirmar Pedido</span><span class="spinner"><i class="fas fa-spinner fa-spin"></i> Processando...</span></button><div class="secure-badge"><i class="fas fa-shield-alt"></i> Ambiente seguro Â· Pagar.me</div></div></div>
         </div>`;
 
         bindEvents();

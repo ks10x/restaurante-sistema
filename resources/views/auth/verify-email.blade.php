@@ -9,6 +9,14 @@
         </div>
     @endif
 
+    @if (session('verification_url'))
+        <div class="mb-4 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-3 break-all">
+            <div class="font-semibold">Ambiente de desenvolvimento:</div>
+            <div>Seu servidor de e-mail não está configurado. Use este link para verificar:</div>
+            <a class="underline" href="{{ session('verification_url') }}">Abrir link de verificação</a>
+        </div>
+    @endif
+
     <div class="mt-4 flex items-center justify-between">
         <form method="POST" action="{{ route('verification.send') }}">
             @csrf

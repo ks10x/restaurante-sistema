@@ -38,13 +38,36 @@ class TwoFactorService
         );
     }
 
+    public function getOtpAuthUrl(string $issuer, string $email, string $secret): string
+    {
+        $issuer = trim($issuer);
+        $email = trim($email);
+        $secret = trim($secret);
+
+        $labelIssuer = rawurlencode($issuer);
+        $labelEmail = rawurlencode($email);
+        $queryIssuer = rawurlencode($issuer);
+        $querySecret = rawurlencode($secret);
+
+        return "otpauth://totp/{$labelIssuer}:{$labelEmail}?secret={$querySecret}&issuer={$queryIssuer}";
+    }
+
     public function verifyKey(string $secret, string $otp): bool
     {
-        return $this->google2fa->verifyKey($secret, $otp);
+        $otp = trim($otp);
+        // Normaliza entradas comuns como "123 456" / "123-456"
+        $normalizedOtp = preg_replace('/[^0-9]/', '', $otp) ?? $otp;
+        if ($normalizedOtp !== '') {
+            $otp = $normalizedOtp;
+        }
+
+        // Window > 1 ajuda a evitar falhas por pequeno desvio de relógio no celular
+        return $this->google2fa->verifyKey($secret, $otp, 2);
     }
 
     public function isRecoveryCodeValid(User $user, string $code): bool
     {
+        $code = trim($code);
         if (!$user->two_factor_recovery_codes) return false;
         
         $codes = json_decode(decrypt($user->two_factor_recovery_codes), true);

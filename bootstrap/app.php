@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            '2fa.required' => \App\Http\Middleware\Require2FA::class,
+            'verified.contacts' => \App\Http\Middleware\RequireVerifiedContacts::class,
         ]);
 
         $middleware->append([

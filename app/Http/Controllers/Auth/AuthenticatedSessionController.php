@@ -59,6 +59,7 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         $request->session()->regenerate();
+        $request->session()->forget('2fa_verified');
         $user = Auth::user();
 
         // Security Sessões Tracking

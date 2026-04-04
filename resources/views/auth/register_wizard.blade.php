@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cadastro — BellaCucina</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
     <style>
         body { background-color: #F8FAFC; }
         .navy-text { color: #1E3A8A; }

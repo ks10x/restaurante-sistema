@@ -12,10 +12,13 @@ class AdminSeeder extends Seeder
     {
         // Admin
         User::updateOrCreate(
-            ['email' => 'admin@restaurante.com'],
+            ['email' => 'gabrielarruda1909@gmail.com'],
             [
                 'name'      => 'Administrador',
                 'password'  => Hash::make('Admin@1234'),
+                'phone'     => '(11) 99999-0001',
+                'email_verified_at' => now(),
+                'phone_verified_at' => now(),
                 'role'      => User::ROLE_ADMIN,
                 'status'    => 'ativo',
             ]
@@ -27,6 +30,9 @@ class AdminSeeder extends Seeder
             [
                 'name'      => 'Chef Cozinha',
                 'password'  => Hash::make('Cozinha@1234'),
+                'phone'     => '(11) 99999-0002',
+                'email_verified_at' => now(),
+                'phone_verified_at' => now(),
                 'role'      => User::ROLE_COZINHA,
                 'status'    => 'ativo',
             ]
@@ -38,6 +44,7 @@ class AdminSeeder extends Seeder
             [
                 'name'      => 'Cliente Teste',
                 'password'  => Hash::make('Cliente@1234'),
+                'phone'     => '(11) 99999-0003',
                 'role'      => User::ROLE_CLIENTE,
                 'status'    => 'ativo',
             ]
@@ -47,7 +54,7 @@ class AdminSeeder extends Seeder
         $this->command->table(
             ['Email', 'Role', 'Senha'],
             [
-                ['admin@restaurante.com',   'Admin (0)',    'Admin@1234'],
+                ['gabrielarruda1909@gmail.com', 'Admin (0)',    'Admin@1234'],
                 ['cozinha@restaurante.com', 'Cozinha (1)', 'Cozinha@1234'],
                 ['cliente@teste.com',       'Cliente (2)', 'Cliente@1234'],
             ]

@@ -6,6 +6,7 @@
     <title>Meus Pedidos — Bella Cucina</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
     <style>
         :root {
             --brand: #1e3a8a;

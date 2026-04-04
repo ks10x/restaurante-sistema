@@ -4,13 +4,15 @@ namespace App\Models;
  
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Notifications\Notifiable;
 use App\Models\ConsentimentoLgpd;
  
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, SoftDeletes, \App\Traits\HasAudit;
+    use HasFactory, Notifiable, SoftDeletes, \App\Traits\HasAudit, MustVerifyEmailTrait;
 
     public const ROLE_ADMIN = 0;
     public const ROLE_COZINHA = 1;
@@ -43,6 +45,7 @@ class User extends Authenticatable
  
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
         'last_login_at'     => 'datetime',
         'password'          => 'hashed',
         'cpf_encrypted'     => \App\Casts\EncryptedString::class,
@@ -80,5 +83,17 @@ class User extends Authenticatable
         return $this->avatar
             ? asset('storage/' . $this->avatar)
             : 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=D85A30&color=fff';
+    }
+
+    public function hasVerifiedPhone(): bool
+    {
+        return !is_null($this->phone_verified_at);
+    }
+
+    public function markPhoneAsVerified(): bool
+    {
+        return $this->forceFill([
+            'phone_verified_at' => $this->freshTimestamp(),
+        ])->save();
     }
 }

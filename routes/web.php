@@ -14,7 +14,7 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\PasswordController;
-use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Auth\PhoneVerificationController;
 
 // ─────────────────────────────────────────────────────────────
 // Controllers Admin
@@ -79,6 +79,15 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')
         ->name('verification.send');
 
+    // Verificação de telefone (dev: código no log)
+    Route::get('verify-phone', [PhoneVerificationController::class, 'notice'])->name('phone.verification.notice');
+    Route::post('phone/verification-notification', [PhoneVerificationController::class, 'send'])
+        ->middleware('throttle:6,1')
+        ->name('phone.verification.send');
+    Route::post('verify-phone', [PhoneVerificationController::class, 'verify'])
+        ->middleware('throttle:10,1')
+        ->name('phone.verification.verify');
+
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
@@ -88,11 +97,12 @@ Route::middleware('auth')->group(function () {
 // ═════════════════════════════════════════════════════════════
 // 2FA — AUTENTICAÇÃO EM DUAS ETAPAS
 // ═════════════════════════════════════════════════════════════
-Route::middleware('auth')->prefix('2fa')->name('2fa.')->group(function () {
-    Route::get('/', [TwoFactorController::class, 'index'])->name('index');
-    Route::post('/', [TwoFactorController::class, 'verify'])->name('verify');
-    Route::get('setup', [TwoFactorController::class, 'setup'])->name('setup');
-    Route::post('setup', [TwoFactorController::class, 'confirm'])->name('confirm');
+// 2FA desativado (mantém rotas "dummy" só para não quebrar links antigos)
+Route::middleware(['auth'])->prefix('2fa')->name('2fa.')->group(function () {
+    Route::get('/', fn () => redirect()->route('cliente.configuracoes')->with('warning', '2FA está desativado.'))->name('index');
+    Route::post('/', fn () => abort(404))->name('verify');
+    Route::get('setup', fn () => redirect()->route('cliente.configuracoes')->with('warning', '2FA está desativado.'))->name('setup');
+    Route::post('setup', fn () => abort(404))->name('confirm');
 });
 
 
@@ -149,7 +159,7 @@ Route::middleware(['auth', 'role:0,2'])->group(function () {
 // ═════════════════════════════════════════════════════════════
 // COZINHA (role=1)
 // ═════════════════════════════════════════════════════════════
-Route::middleware(['auth', 'role:0,1'])
+Route::middleware(['auth', 'role:0,1', 'verified.contacts'])
     ->prefix('cozinha')
     ->name('cozinha.')
     ->group(function () {
@@ -173,7 +183,7 @@ Route::middleware(['auth', 'role:0,3'])
 // ═════════════════════════════════════════════════════════════
 // ADMIN (role=0)
 // ═════════════════════════════════════════════════════════════
-Route::middleware(['auth', 'role:0'])
+Route::middleware(['auth', 'role:0', 'verified.contacts'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {

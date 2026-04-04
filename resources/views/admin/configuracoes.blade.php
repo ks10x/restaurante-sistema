@@ -11,6 +11,61 @@
         </div>
     </div>
 
+    <!-- Aparência do Painel (localStorage) -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-lg font-bold text-slate-900 mb-1">Aparência do Painel</h2>
+        <p class="text-sm text-slate-600">Preferência salva neste navegador (tema + alto contraste).</p>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Tema (cor principal)</label>
+                <select data-a11y-theme class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 outline-none focus:border-brand-500">
+                    <option value="blue">Azul</option>
+                    <option value="green">Verde</option>
+                    <option value="yellow">Amarelo</option>
+                    <option value="orange">Laranja</option>
+                    <option value="red">Vermelho</option>
+                    <option value="purple">Roxo</option>
+                    <option value="teal">Teal</option>
+                    <option value="slate">Slate</option>
+                </select>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <button type="button" data-a11y-theme-btn="blue" class="h-8 w-8 rounded-full border border-slate-200" style="background:#2563eb" title="Azul"></button>
+                    <button type="button" data-a11y-theme-btn="green" class="h-8 w-8 rounded-full border border-slate-200" style="background:#059669" title="Verde"></button>
+                    <button type="button" data-a11y-theme-btn="yellow" class="h-8 w-8 rounded-full border border-slate-200" style="background:#d97706" title="Amarelo"></button>
+                    <button type="button" data-a11y-theme-btn="orange" class="h-8 w-8 rounded-full border border-slate-200" style="background:#ea580c" title="Laranja"></button>
+                    <button type="button" data-a11y-theme-btn="red" class="h-8 w-8 rounded-full border border-slate-200" style="background:#dc2626" title="Vermelho"></button>
+                    <button type="button" data-a11y-theme-btn="purple" class="h-8 w-8 rounded-full border border-slate-200" style="background:#9333ea" title="Roxo"></button>
+                    <button type="button" data-a11y-theme-btn="teal" class="h-8 w-8 rounded-full border border-slate-200" style="background:#0d9488" title="Teal"></button>
+                    <button type="button" data-a11y-theme-btn="slate" class="h-8 w-8 rounded-full border border-slate-200" style="background:#475569" title="Slate"></button>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex items-center justify-between bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <div>
+                        <div class="text-sm font-bold text-slate-900">Alto contraste</div>
+                        <div class="text-xs text-slate-600">Melhora legibilidade</div>
+                    </div>
+                    <button type="button" onclick="window.A11Y_PREFS?.toggle('contrast')" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white font-bold hover:bg-brand-700 transition">
+                        Alternar
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <div>
+                        <div class="text-sm font-bold text-slate-900">Reduzir animações</div>
+                        <div class="text-xs text-slate-600">Remove transições</div>
+                    </div>
+                    <button type="button" onclick="window.A11Y_PREFS?.toggle('reduce_motion')" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white font-bold hover:bg-brand-700 transition">
+                        Alternar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Mensagens de Alerta (Session) -->
     @if(session('success'))
     <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 mb-4 rounded-md">
