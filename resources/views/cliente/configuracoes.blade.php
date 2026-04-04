@@ -249,14 +249,6 @@
         </form>
 
         <div class="section-card" style="margin-top:12px">
-            <div class="menu-item" onclick="toggleA11yPref('contrast')">
-                <div class="menu-icon slate"><i class="fas fa-adjust"></i></div>
-                <div class="menu-text">
-                    <div class="title">Alto contraste</div>
-                    <div class="subtitle">Melhora legibilidade (salvo no seu dispositivo)</div>
-                </div>
-                <div class="toggle-switch" data-a11y-toggle="contrast"></div>
-            </div>
             <div class="menu-item" onclick="toggleA11yPref('reduce_motion')">
                 <div class="menu-icon slate"><i class="fas fa-running"></i></div>
                 <div class="menu-text">
@@ -589,7 +581,6 @@ function applyA11yPrefs() {
     document.body.classList.toggle('pref-contrast', contrast);
     document.body.classList.toggle('pref-reduce-motion', reduceMotion);
 
-    document.querySelectorAll('[data-a11y-toggle="contrast"]').forEach(el => el.classList.toggle('active', contrast));
     document.querySelectorAll('[data-a11y-toggle="reduce_motion"]').forEach(el => el.classList.toggle('active', reduceMotion));
 }
 function toggleA11yPref(key) {

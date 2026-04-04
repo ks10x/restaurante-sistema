@@ -8,20 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
-    
+    @include('layouts.partials.restaurant-theme')
+
     <style>
         :root {
-            --amber:   #1E3A8A;
-            --amber-d: #1E40AF;
-            --dark:    #F8FAFC;
-            --dark2:   #F1F5F9;
+            --amber:   var(--color-secondary);
+            --amber-d: color-mix(in srgb, var(--color-secondary) 85%, black 15%);
+            --dark:    #FFFFFF;
+            --dark2:   #F8FAFC;
             --surface: #FFFFFF;
-            --surface2:#F8FAFC;
-            --text:    #0F172A;
+            --surface2:#FFFFFF;
+            --text:    var(--text-main);
             --text-m:  #64748B;
             --text-s:  #94A3B8;
             --red:     #EF4444;
-            --border:  rgba(30, 58, 138, 0.15);
+            --border:  var(--color-secondary-border);
             --radius:  14px;
             --font-h:  'Playfair Display', serif;
             --font-b:  'DM Sans', sans-serif;
@@ -40,8 +41,16 @@
             display:flex;align-items:center;justify-content:space-between;
             height:72px;
         }
-        .logo{font-family:var(--font-h);font-size:1.5rem;color:var(--amber);letter-spacing:-0.5px; text-decoration: none;}
-        .logo span{color:var(--text-m);font-weight:400;font-size:1.1rem}
+        .logo{
+            display:flex; align-items:center; justify-content:center;
+            min-width:96px; min-height:42px;
+            text-decoration:none;
+        }
+        .logo img{
+            max-height:44px; max-width:180px; object-fit:contain;
+        }
+        .logo-text{font-family:var(--font-h);font-size:1.5rem;color:var(--amber);letter-spacing:-0.5px;}
+        .logo-text span{color:var(--text-m);font-weight:400;font-size:1.1rem}
 
         .header-actions{display:flex;gap:1.5rem;align-items:center}
         
@@ -54,7 +63,7 @@
             border-radius: 50px;
             cursor: pointer; transition: all 0.3s ease;
         }
-        .user-profile-btn:hover { border-color: var(--amber); background: rgba(212, 163, 115, 0.05); }
+        .user-profile-btn:hover { border-color: var(--amber); background: var(--surface-accent); }
         
         .user-initial {
             width: 36px; height: 36px;
@@ -99,7 +108,7 @@
         }
 
         /* HERO */
-        .hero{ padding:4rem 2rem 2rem; background:linear-gradient(180deg, rgba(212,163,115,0.06) 0%, transparent 100%); border-bottom:1px solid var(--border); text-align: center;}
+        .hero{ padding:4rem 2rem 2rem; background:linear-gradient(180deg, color-mix(in srgb, var(--color-secondary) 8%, white 92%) 0%, transparent 100%); border-bottom:1px solid var(--border); text-align: center;}
         .hero h1{font-family:var(--font-h);font-size:clamp(2rem,5vw,3.5rem);line-height:1.1;color:var(--text); margin-bottom: 1rem;}
         .hero h1 em{color:var(--amber);font-style:normal}
         
@@ -144,17 +153,17 @@
         .floating-cart {
             position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 480px; height: 60px;
-            background: rgba(30, 58, 138, 0.95);
+            background: linear-gradient(135deg, var(--amber) 0%, var(--amber-d) 100%);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid color-mix(in srgb, var(--color-secondary) 40%, white 60%);
             border-radius: 18px; z-index: 250; 
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 12px 35px color-mix(in srgb, var(--color-secondary) 28%, transparent);
             cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
         }
         .floating-cart.active { bottom: 30px; }
-        .floating-cart:hover { transform: translateX(-50%) translateY(-3px); box-shadow: 0 15px 40px rgba(30, 58, 138, 0.4); }
+        .floating-cart:hover { transform: translateX(-50%) translateY(-3px); box-shadow: 0 15px 40px color-mix(in srgb, var(--color-secondary) 35%, transparent); }
         .floating-cart-inner { display: flex; align-items: center; justify-content: space-between; height: 100%; padding: 0 1.2rem; color: #FFFFFF; width: 100%; }
         
         .float-qty-box { background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 12px; font-weight: 800; font-size: 1.1rem; border: 1px solid rgba(255,255,255,0.1); }
@@ -264,7 +273,13 @@
 <body>
 
 <header>
-    <a href="/" class="logo">Bella<span>Cucina</span></a>
+    <a href="/" class="logo" aria-label="Pagina inicial">
+        @if($restaurantConfig->logo_url)
+            <img src="{{ $restaurantConfig->logo_url }}" alt="Logo do restaurante">
+        @else
+            <span class="logo-text">{{ config('app.name', 'Restaurante') }}</span>
+        @endif
+    </a>
     
     <div class="header-actions">
         <button class="btn-sacola" id="btnToggleCartTop">
@@ -311,7 +326,9 @@
     </div>
 </header>
 
-<div class="hero">
+<x-restaurant-hero :config="$restaurantConfig" />
+
+<div class="hero" style="display:none;">
     <div class="hero-inner">
         <h1>Sabor que aquece a <em>alma</em></h1>
         <p style="color: var(--text-m); font-size: 1.1rem;">A verdadeira essência da gastronomia italiana na sua mesa.</p>

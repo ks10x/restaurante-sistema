@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CardapioController as AdminCardapioController;
 use App\Http\Controllers\Admin\EstoqueController;
 use App\Http\Controllers\Admin\NotificacaoController as AdminNotificacaoController;
+use App\Http\Controllers\Admin\SettingsController;
 
 // ─────────────────────────────────────────────────────────────
 // Controllers Cliente
@@ -234,6 +235,7 @@ Route::middleware(['auth', 'role:0', 'verified.contacts'])
         // Configurações
         Route::get('/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'index'])->name('configuracoes.index');
         Route::post('/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'store'])->name('configuracoes.store');
+        Route::put('/configuracoes/white-label', [SettingsController::class, 'update'])->name('configuracoes.white-label.update');
     });
 
 

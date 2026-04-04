@@ -80,6 +80,7 @@
     if (document.body) {
       document.body.classList.toggle('pref-contrast', contrast);
       document.body.classList.toggle('pref-reduce-motion', reduceMotion);
+      document.body.classList.toggle('high-contrast', contrast);
       document.body.dataset.theme = themeKey;
     }
 

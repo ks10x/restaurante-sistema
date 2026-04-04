@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Notifications\Notifiable;
 use App\Models\ConsentimentoLgpd;
+use App\Models\RestaurantConfig;
  
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -73,6 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function notificacoes() { return $this->hasMany(Notificacao::class); }
     public function funcionario()  { return $this->hasOne(Funcionario::class); }
     public function consentimentoLgpd() { return $this->hasOne(ConsentimentoLgpd::class); }
+    public function restaurantConfig() { return $this->hasOne(RestaurantConfig::class); }
  
     public function enderecoAtivo() {
         return $this->enderecos()->where('principal', 1)->first()
