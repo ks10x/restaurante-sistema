@@ -630,6 +630,64 @@ body {
   </div>
 </div>
 
+{{-- ── LINHA 4: Clientes recentes ── --}}
+<div class="panel" style="margin-top:28px">
+  <div class="panel-head">
+    <span class="panel-title">Clientes Cadastrados</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="panel-chip">{{ $clientesBloqueados }} bloqueados</span>
+      <a href="{{ route('admin.clientes.index') }}" class="panel-link">Gerenciar →</a>
+    </div>
+  </div>
+  <div class="panel-body" style="padding-top:0">
+    @if(($clientesRecentes ?? collect())->isEmpty())
+      <div class="empty"><div class="empty-ico">👥</div>Nenhum cliente cadastrado ainda</div>
+    @else
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>E-mail</th>
+            <th>Status</th>
+            <th style="text-align:right">Ações</th>
+            <th style="text-align:right">Cadastro</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($clientesRecentes as $cli)
+          @php($blocked = ($cli->status ?? 'ativo') !== 'ativo')
+          <tr>
+            <td>
+              <div class="order-name">{{ $cli->name }} {{ $cli->last_name }}</div>
+              <div class="order-items">{{ $cli->phone ?: '—' }}</div>
+            </td>
+            <td>
+              <div class="order-id" style="font-weight:500">{{ $cli->email }}</div>
+            </td>
+            <td>
+              <span class="status-pill {{ $blocked ? 's-cancelado' : 's-entregue' }}">{{ $blocked ? 'Bloqueado' : 'Ativo' }}</span>
+            </td>
+            <td style="text-align:right">
+              <a href="{{ route('admin.clientes.index', ['view' => $cli->id]) }}" class="panel-link" style="font-size:11px">Ver</a>
+              <form action="{{ route('admin.clientes.toggleBlock', $cli) }}" method="POST" style="display:inline" onsubmit="return adminConfirmSubmit(event, { title: '{{ $blocked ? 'Desbloquear cliente' : 'Bloquear cliente' }}', message: 'Tem certeza que deseja {{ $blocked ? 'desbloquear' : 'bloquear' }} este cliente?', confirmText: '{{ $blocked ? 'Desbloquear' : 'Bloquear' }}' });">
+                @csrf
+                @method('PATCH')
+                <button type="submit" class="panel-link" style="font-size:11px;margin-left:10px;color:{{ $blocked ? 'var(--green)' : 'var(--red)' }}">
+                  {{ $blocked ? 'Desbloquear' : 'Bloquear' }}
+                </button>
+              </form>
+            </td>
+            <td style="text-align:right">
+              <div style="font-size:11px;color:var(--muted)">{{ $cli->created_at?->format('d/m H:i') }}</div>
+            </td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
+    @endif
+  </div>
+</div>
+
 @endsection
 
 @push('scripts')

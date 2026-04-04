@@ -16,8 +16,11 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'endereco' => $user->enderecoAtivo(),
         ]);
     }
 
@@ -57,6 +60,30 @@ class ProfileController extends Controller
         }
 
         $user->save();
+
+        $addressKeys = ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado'];
+        $addressData = collect($data)->only($addressKeys)->toArray();
+
+        if (collect($addressData)->filter(fn ($v) => filled($v))->isNotEmpty()) {
+            $cepDigits = preg_replace('/\\D/', '', (string) ($addressData['cep'] ?? ''));
+            $addressData['cep'] = $cepDigits;
+            $addressData['estado'] = strtoupper((string) ($addressData['estado'] ?? ''));
+
+            $endereco = $user->enderecos()
+                ->whereNull('deleted_at')
+                ->orderByDesc('principal')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($endereco) {
+                $endereco->update($addressData);
+            } else {
+                $user->enderecos()->create(array_merge($addressData, [
+                    'apelido' => 'Casa',
+                    'principal' => 1,
+                ]));
+            }
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

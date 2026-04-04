@@ -64,6 +64,9 @@
                             {{ $func->created_at->format('d/m/Y') }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button @click="openInfo({{ Js::from($func) }})" class="text-slate-400 hover:text-brand-600 transition-colors px-2" title="Ver informações">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
                             <button @click="openModal('edit', {{ Js::from($func) }})" class="text-slate-400 hover:text-brand-600 transition-colors px-2" title="Editar Funcionário">
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
@@ -133,10 +136,26 @@
                                 Senha de Acesso
                                 <span x-show="mode === 'edit'" class="text-xs text-orange-600 font-normal ml-1">(Deixe em branco para manter a atual)</span>
                             </label>
-                            <input type="password" name="password" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 outline-none focus:border-brand-500 mb-3" placeholder="Mínimo 8 caracteres">
+                            <div class="relative mb-3">
+                                <input id="func_password" type="password" name="password" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 pr-12 text-slate-900 outline-none focus:border-brand-500" placeholder="Mínimo 8 caracteres">
+                                <button type="button" data-toggle-password="func_password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
                             
                             <label class="block text-sm font-semibold text-slate-700 mb-1">Confirmar Senha</label>
-                            <input type="password" name="password_confirmation" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 outline-none focus:border-brand-500">
+                            <div class="relative">
+                                <input id="func_password_confirmation" type="password" name="password_confirmation" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 pr-12 text-slate-900 outline-none focus:border-brand-500">
+                                <button type="button" data-toggle-password="func_password_confirmation" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
@@ -150,14 +169,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Info -->
+    <div x-show="isInfoOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isInfoOpen" x-transition.opacity class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity" @click="closeInfo()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div x-show="isInfoOpen" class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border-t-4 border-brand-500">
+                <div class="px-6 py-5 bg-white">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-lg leading-6 font-bold text-slate-900">Informações do Funcionário</h3>
+                            <p class="text-xs text-slate-500 mt-1" x-text="`ID #${selectedInfo?.id ?? ''}`"></p>
+                        </div>
+                        <button type="button" class="text-slate-400 hover:text-slate-600" @click="closeInfo()">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="mt-4 space-y-3 text-sm text-slate-700">
+                        <div><span class="font-semibold">Nome:</span> <span x-text="selectedInfo?.name ?? ''"></span></div>
+                        <div><span class="font-semibold">E-mail:</span> <span x-text="selectedInfo?.email ?? ''"></span></div>
+                        <div><span class="font-semibold">Cargo (role):</span> <span x-text="selectedInfo?.role ?? ''"></span></div>
+                        <div><span class="font-semibold">PIN:</span> <span x-text="selectedInfo?.funcionario?.codigo_identificacao ?? 'N/A'"></span></div>
+                        <div><span class="font-semibold">Criado em:</span> <span x-text="selectedInfo?.created_at ?? '-'"></span></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 px-6 py-4 flex justify-end rounded-b-2xl border-t border-slate-100">
+                    <button type="button" @click="closeInfo()" class="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg shadow-sm hover:bg-slate-100">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('funcionarioManager', () => ({
         isModalOpen: false,
+        isInfoOpen: false,
         mode: 'create', // create | edit
         formAction: "{{ route('admin.funcionarios.store') }}",
+        selectedInfo: null,
         formData: {
             name: '',
             email: '',
@@ -180,10 +235,30 @@ document.addEventListener('alpine:init', () => {
             this.isModalOpen = true;
         },
 
+        openInfo(data) {
+            this.selectedInfo = data;
+            this.isInfoOpen = true;
+        },
+
+        closeInfo() {
+            this.isInfoOpen = false;
+            this.selectedInfo = null;
+        },
+
         closeModal() {
             this.isModalOpen = false;
         }
     }));
 });
+</script>
+<script>
+    document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-toggle-password');
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+        });
+    });
 </script>
 @endsection

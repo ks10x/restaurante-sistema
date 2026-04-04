@@ -9,6 +9,8 @@ class PedidoStatusHistorico extends Model
 {
     use HasFactory;
 
+    protected $table = 'pedido_status_historico';
+
     protected $fillable = [
         'pedido_id', 'status', 'user_id', 'observacao'
     ];

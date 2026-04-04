@@ -130,7 +130,11 @@ Route::middleware(['auth', 'role:0,2'])->group(function () {
     Route::delete('/perfil', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Configurações do Cliente
-    Route::get('/configuracoes', fn() => view('cliente.configuracoes'))->name('cliente.configuracoes');
+    Route::get('/configuracoes', [\App\Http\Controllers\Cliente\MinhaContaController::class, 'index'])->name('cliente.configuracoes');
+
+    // Segurança (Minha Conta)
+    Route::delete('/seguranca/sessoes/outras', [\App\Http\Controllers\Cliente\MinhaContaController::class, 'revokeOutrasSessoes'])->name('cliente.seguranca.sessoes.outras');
+    Route::delete('/seguranca/sessoes/{id}', [\App\Http\Controllers\Cliente\MinhaContaController::class, 'revokeSessao'])->name('cliente.seguranca.sessoes.revoke');
 
     // LGPD
     Route::prefix('privacidade')->name('lgpd.')->group(function () {
@@ -207,6 +211,12 @@ Route::middleware(['auth', 'role:0'])
             Route::post('/', [\App\Http\Controllers\Admin\FuncionarioController::class, 'store'])->name('store');
             Route::put('/{user}', [\App\Http\Controllers\Admin\FuncionarioController::class, 'update'])->name('update');
             Route::delete('/{user}', [\App\Http\Controllers\Admin\FuncionarioController::class, 'destroy'])->name('destroy');
+        });
+
+        // Clientes
+        Route::prefix('clientes')->name('clientes.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ClienteController::class, 'index'])->name('index');
+            Route::patch('/{user}/toggle-block', [\App\Http\Controllers\Admin\ClienteController::class, 'toggleBlock'])->name('toggleBlock');
         });
 
         // Configurações

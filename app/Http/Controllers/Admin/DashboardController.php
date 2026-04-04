@@ -77,6 +77,31 @@ class DashboardController extends Controller
             ->limit(6)
             ->get();
 
-        return view('admin.dashboard', compact('kpis','vendas7dias','topPratos','pedidosRecentes', 'ingredientesMaisUsados', 'pratosComprometidos', 'hasPedidoItensTable'));
+        $clientesRecentes = User::query()
+            ->where(function ($q) {
+                $q->where('role', User::ROLE_CLIENTE)->orWhere('role', 'cliente');
+            })
+            ->orderByDesc('id')
+            ->limit(6)
+            ->get(['id', 'name', 'last_name', 'email', 'phone', 'status', 'created_at']);
+
+        $clientesBloqueados = User::query()
+            ->where(function ($q) {
+                $q->where('role', User::ROLE_CLIENTE)->orWhere('role', 'cliente');
+            })
+            ->where('status', '!=', 'ativo')
+            ->count();
+
+        return view('admin.dashboard', compact(
+            'kpis',
+            'vendas7dias',
+            'topPratos',
+            'pedidosRecentes',
+            'ingredientesMaisUsados',
+            'pratosComprometidos',
+            'hasPedidoItensTable',
+            'clientesRecentes',
+            'clientesBloqueados'
+        ));
     }
 }

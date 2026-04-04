@@ -11,8 +11,18 @@ class Endereco extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'tipo', 'apelido', 'cep', 'logradouro', 'numero', 'complemento',
-        'bairro', 'cidade', 'estado', 'uf', 'principal',
+        'user_id',
+        'apelido',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'cidade',
+        'estado',
+        'latitude',
+        'longitude',
+        'principal',
     ];
 
     protected $casts = [
@@ -26,8 +36,6 @@ class Endereco extends Model
 
     public function getEnderecoCompletoAttribute(): string
     {
-        $uf = $this->uf ?? $this->estado;
-
-        return "{$this->logradouro}, {$this->numero} - {$this->bairro}, {$this->cidade}/{$uf}";
+        return "{$this->logradouro}, {$this->numero} - {$this->bairro}, {$this->cidade}/{$this->estado}";
     }
 }

@@ -50,6 +50,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+        if ($user && ($user->status ?? 'ativo') !== 'ativo') {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Sua conta está bloqueada. Fale com o suporte.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

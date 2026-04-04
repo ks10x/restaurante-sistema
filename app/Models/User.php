@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\ConsentimentoLgpd;
  
 class User extends Authenticatable
 {
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'cpf',
+        'birth_date',
         'cpf_encrypted',
         'phone',
         'phone_encrypted',
@@ -45,6 +47,7 @@ class User extends Authenticatable
         'password'          => 'hashed',
         'cpf_encrypted'     => \App\Casts\EncryptedString::class,
         'phone_encrypted'   => \App\Casts\EncryptedString::class,
+        'birth_date'        => 'date',
     ];
  
     public function isAdmin(): bool      { return (int)$this->role === self::ROLE_ADMIN; }
@@ -66,6 +69,7 @@ class User extends Authenticatable
     public function avaliacoes()   { return $this->hasMany(Avaliacao::class); }
     public function notificacoes() { return $this->hasMany(Notificacao::class); }
     public function funcionario()  { return $this->hasOne(Funcionario::class); }
+    public function consentimentoLgpd() { return $this->hasOne(ConsentimentoLgpd::class); }
  
     public function enderecoAtivo() {
         return $this->enderecos()->where('principal', 1)->first()

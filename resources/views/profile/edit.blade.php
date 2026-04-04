@@ -6,6 +6,7 @@
     <title>Meu Perfil — Bella Cucina</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
     <style>
         :root {
             --brand: #1e3a8a; /* blue-900 */
@@ -46,6 +47,10 @@
         .btn-save { background: var(--brand); color: #fff; border: none; padding: 18px 40px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 20px; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2); }
         .btn-save:hover { background: var(--brand-d); transform: translateY(-2px); }
 
+        .pass-wrap { position: relative; }
+        .pass-wrap input { width: 100%; padding-right: 46px; }
+        .pass-wrap button { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-m); z-index: 2; }
+
         @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
     </style>
 </head>
@@ -81,9 +86,10 @@
             <div class="photo-upload">
                 <div class="current-photo">
                     @if(Auth::user()->avatar)
-                        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="User Photo">
+                        <img id="avatarPreview" src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="User Photo">
                     @else
-                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        <img id="avatarPreview" src="" alt="User Photo" style="display:none;">
+                        <span id="avatarFallback">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                     @endif
                 </div>
                 <div>
@@ -121,28 +127,67 @@
                 </div>
                 <div class="form-group full-width">
                     <label>Nova Senha (deixe em branco para não alterar)</label>
-                    <input type="password" name="password" autocomplete="new-password">
+                    <div class="form-grid" style="gap:20px; margin-top: 6px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <div class="pass-wrap">
+                                <input id="profile_password" type="password" name="password" autocomplete="new-password" placeholder="Nova senha">
+                                <button type="button" data-toggle-password="profile_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <div class="pass-wrap">
+                                <input id="profile_password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" placeholder="Confirmar nova senha">
+                                <button type="button" data-toggle-password="profile_password_confirmation">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="profile-card">
-            <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> Endereços Salvos</h2>
-            
-            <div class="address-box">
-                <label style="color: var(--brand); display: block; margin-bottom: 15px;"><i class="fas fa-home"></i> Residencial</label>
-                <div class="form-grid">
-                    <div class="form-group full-width">
-                        <input type="text" name="address_home" placeholder="Rua, Número, Bairro, Guaianases..." value="{{ old('address_home', Auth::user()->address_home) }}">
-                    </div>
-                </div>
-            </div>
+            <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> Meu Endereço</h2>
 
-            <div class="address-box" style="border-left-color: var(--text-s);">
-                <label style="color: var(--text-m); display: block; margin-bottom: 15px;"><i class="fas fa-briefcase"></i> Trabalho</label>
+            @php($addr = $endereco)
+            <div class="address-box">
+                <label style="color: var(--brand); display: block; margin-bottom: 15px;"><i class="fas fa-home"></i> Endereço principal</label>
+
                 <div class="form-grid">
+                    <div class="form-group">
+                        <label>CEP</label>
+                        <input id="addr-cep" type="text" name="cep" placeholder="00000-000" value="{{ old('cep', $addr?->cep) }}">
+                        <div id="addr-cep-hint" style="margin-top:6px;font-size:11px;color:var(--text-s);"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Número</label>
+                        <input id="addr-numero" type="text" name="numero" value="{{ old('numero', $addr?->numero) }}">
+                    </div>
+
                     <div class="form-group full-width">
-                        <input type="text" name="address_work" placeholder="Endereço da sua empresa ou escritório" value="{{ old('address_work', Auth::user()->address_work) }}">
+                        <label>Rua (Logradouro)</label>
+                        <input id="addr-logradouro" type="text" name="logradouro" value="{{ old('logradouro', $addr?->logradouro) }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bairro</label>
+                        <input id="addr-bairro" type="text" name="bairro" value="{{ old('bairro', $addr?->bairro) }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Cidade</label>
+                        <input id="addr-cidade" type="text" name="cidade" value="{{ old('cidade', $addr?->cidade) }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>UF</label>
+                        <input id="addr-estado" type="text" name="estado" maxlength="2" value="{{ old('estado', $addr?->estado) }}" placeholder="SP">
+                    </div>
+                    <div class="form-group">
+                        <label>Complemento</label>
+                        <input id="addr-complemento" type="text" name="complemento" value="{{ old('complemento', $addr?->complemento) }}">
                     </div>
                 </div>
             </div>
@@ -153,6 +198,123 @@
         </div>
     </form>
 </div>
+<script>
+    function onlyDigits(v) { return (v || '').toString().replace(/\D/g, ''); }
+
+    function maskCpf(v) {
+        const d = onlyDigits(v).slice(0,11);
+        return d
+            .replace(/^(\d{3})(\d)/, '$1.$2')
+            .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+    }
+
+    function maskCep(v) {
+        const d = onlyDigits(v).slice(0,8);
+        return d.replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+
+    function maskPhone(v) {
+        const d = onlyDigits(v).slice(0,11);
+        if (d.length <= 10) {
+            return d
+                .replace(/^(\d{2})(\d)/, '($1) $2')
+                .replace(/(\d{4})(\d)/, '$1-$2');
+        }
+        return d
+            .replace(/^(\d{2})(\d)/, '($1) $2')
+            .replace(/(\d{5})(\d)/, '$1-$2');
+    }
+
+    // Password eye toggle
+    document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-toggle-password');
+            const input = document.getElementById(id);
+            if (!input) return;
+
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye', !isPassword);
+                icon.classList.toggle('fa-eye-slash', isPassword);
+            }
+        });
+    });
+
+    // Avatar preview
+    const photoInput = document.getElementById('photo');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarFallback = document.getElementById('avatarFallback');
+
+    photoInput?.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file || !avatarPreview) return;
+
+        const url = URL.createObjectURL(file);
+        avatarPreview.src = url;
+        avatarPreview.style.display = 'block';
+        if (avatarFallback) avatarFallback.style.display = 'none';
+    });
+
+    // Masks
+    const cpfInput = document.getElementById('cpf');
+    const phoneInput = document.querySelector('input[name="phone"]');
+    const cepInput = document.getElementById('addr-cep');
+    const estadoInput = document.getElementById('addr-estado');
+
+    cpfInput?.addEventListener('input', (e) => { e.target.value = maskCpf(e.target.value); });
+    phoneInput?.addEventListener('input', (e) => { e.target.value = maskPhone(e.target.value); });
+    cepInput?.addEventListener('input', (e) => { e.target.value = maskCep(e.target.value); });
+    estadoInput?.addEventListener('input', (e) => {
+        e.target.value = (e.target.value || '').toUpperCase().replace(/[^A-Z]/g,'').slice(0,2);
+    });
+
+    // ViaCEP
+    const cepHint = document.getElementById('addr-cep-hint');
+    let lastCepLookup = null;
+
+    async function lookupCep() {
+        if (!cepInput) return;
+        const cepDigits = onlyDigits(cepInput.value);
+        if (cepDigits.length !== 8) return;
+        if (cepDigits === lastCepLookup) return;
+
+        lastCepLookup = cepDigits;
+        if (cepHint) cepHint.textContent = 'Buscando CEP...';
+
+        try {
+            const resp = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+            const data = await resp.json();
+
+            if (data.erro) {
+                if (cepHint) cepHint.textContent = 'CEP não encontrado. Você pode preencher manualmente.';
+                return;
+            }
+
+            const logradouro = document.getElementById('addr-logradouro');
+            const bairro = document.getElementById('addr-bairro');
+            const cidade = document.getElementById('addr-cidade');
+            const estado = document.getElementById('addr-estado');
+
+            if (logradouro && !logradouro.value) logradouro.value = data.logradouro || '';
+            if (bairro && !bairro.value) bairro.value = data.bairro || '';
+            if (cidade && !cidade.value) cidade.value = data.localidade || '';
+            if (estado) estado.value = (data.uf || '').toUpperCase();
+
+            if (cepHint) cepHint.textContent = 'Endereço preenchido automaticamente. Você pode editar se quiser.';
+        } catch (e) {
+            if (cepHint) cepHint.textContent = 'Erro ao consultar ViaCEP. Preencha manualmente.';
+        }
+    }
+
+    cepInput?.addEventListener('blur', lookupCep);
+    cepInput?.addEventListener('keyup', () => {
+        if (onlyDigits(cepInput.value).length === 8) lookupCep();
+    });
+</script>
 
 </body>
 </html>

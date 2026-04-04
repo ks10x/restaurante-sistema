@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class CheckoutController extends Controller
 {
@@ -84,52 +85,64 @@ class CheckoutController extends Controller
     public function processarPagamento(Request $request, PagarmeService $pagarme)
     {
         try {
-            $validated = $request->validate([
-                'itens'            => 'required|array|min:1',
-                'itens.*.prato_id' => 'required|integer',
-                'itens.*.qtd'      => 'required|integer|min:1',
-                'itens.*.preco'    => 'required|numeric|min:0',
-                'endereco_id'      => 'required|exists:enderecos,id',
-                'tipo_entrega'     => 'required|in:entrega,retirada',
-                'pagamento_metodo' => 'required|in:pix,cartao_credito',
-                'observacoes'      => 'nullable|string|max:500',
-                'card_token'       => 'required_if:pagamento_metodo,cartao_credito|string',
-                'card_last_four'   => 'nullable|string|max:4',
-                'card_brand'       => 'nullable|string|max:40',
-                'parcelas'         => 'nullable|integer|min:1|max:12',
-            ]);
-
             /** @var \App\Models\User $user */
             $user = Auth::user();
 
+            $validated = $request->validate([
+                'itens'            => ['required', 'array', 'min:1'],
+                'itens.*.prato_id' => ['required', 'integer'],
+                'itens.*.qtd'      => ['required', 'integer', 'min:1'],
+                'itens.*.preco'    => ['required', 'numeric', 'min:0'],
+                'tipo_entrega'     => ['required', 'in:entrega,retirada'],
+                'endereco_id'      => [
+                    'nullable',
+                    Rule::requiredIf(fn () => $request->input('tipo_entrega') === 'entrega'),
+                    Rule::exists('enderecos', 'id')->where(fn ($q) => $q->where('user_id', $user->id)->whereNull('deleted_at')),
+                ],
+                'pagamento_metodo' => ['required', 'in:pix,cartao_credito'],
+                'observacoes'      => ['nullable', 'string', 'max:500'],
+                'card_token'       => ['required_if:pagamento_metodo,cartao_credito', 'string'],
+                'card_last_four'   => ['nullable', 'string', 'max:4'],
+                'card_brand'       => ['nullable', 'string', 'max:40'],
+                'parcelas'         => ['nullable', 'integer', 'min:1', 'max:12'],
+            ]);
+
             return DB::transaction(function () use ($validated, $user, $pagarme) {
                 $itens = collect($validated['itens']);
-                $subtotal = 0;
+                $subtotal = 0.0;
 
-            // Validate items and compute subtotal from DB prices (security)
-            $itensPronto = $itens->map(function ($item) use (&$subtotal) {
-                $prato = Prato::findOrFail($item['prato_id']);
-                abort_if(!$prato->disponivel, 422, "Prato {$prato->nome} indisponível.");
+                // Validate items and compute subtotal from DB prices (security)
+                $itensPronto = $itens->map(function ($item) use (&$subtotal) {
+                    $prato = Prato::findOrFail($item['prato_id']);
+                    abort_if(! $prato->disponivel || ! $prato->ativo, 422, "Prato {$prato->nome} indisponível.");
 
-                    $preco = $prato->preco_ativo;
-                    $itemTotal = $preco * $item['qtd'];
+                    $preco = (float) $prato->preco_ativo;
+                    $quantidade = (int) $item['qtd'];
+                    $itemTotal = round($preco * $quantidade, 2);
                     $subtotal += $itemTotal;
 
-                return [
-                    'prato_id'       => $prato->id,
-                    'preco_unitario' => $preco,
-                    'quantidade'     => $item['qtd'],
-                ];
-            });
+                    return [
+                        'prato_id' => $prato->id,
+                        'nome_prato' => $prato->nome,
+                        'preco_unitario' => $preco,
+                        'quantidade' => $quantidade,
+                        'subtotal' => $itemTotal,
+                        'opcoes' => $item['opcoes'] ?? null,
+                        'observacao' => $item['observacao'] ?? null,
+                    ];
+                });
 
-                $taxaEntrega = $validated['tipo_entrega'] === 'entrega' ? 5.00 : 0;
-                $descontoPix = $validated['pagamento_metodo'] === 'pix' ? round($subtotal * 0.05, 2) : 0;
-                $total = max(0, $subtotal + $taxaEntrega - $descontoPix);
+                $tipoEntrega = $validated['tipo_entrega'];
+                $enderecoId = $tipoEntrega === 'entrega' ? $validated['endereco_id'] : null;
+
+                $taxaEntrega = $tipoEntrega === 'entrega' ? 5.00 : 0.00;
+                $descontoPix = $validated['pagamento_metodo'] === 'pix' ? round($subtotal * 0.05, 2) : 0.00;
+                $total = max(0, round($subtotal + $taxaEntrega - $descontoPix, 2));
 
                 $pedido = Pedido::create([
                     'user_id'          => $user->id,
-                    'endereco_id'      => $validated['endereco_id'],
-                    'tipo_entrega'     => $validated['tipo_entrega'],
+                    'endereco_id'      => $enderecoId,
+                    'tipo_entrega'     => $tipoEntrega,
                     'status'           => 'aguardando_pagamento',
                     'subtotal'         => $subtotal,
                     'taxa_entrega'     => $taxaEntrega,
@@ -176,5 +189,22 @@ class CheckoutController extends Controller
                 'pix'      => $pixData,
             ]);
         });
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?: 'Dados invalidos para finalizar o pagamento.',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Falha ao processar pagamento no checkout', [
+                'message' => $e->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Nao foi possivel processar o pagamento agora. Tente novamente em instantes.',
+            ], 500);
+        }
     }
 }

@@ -44,11 +44,27 @@
             </div>
             <div>
                 <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Nova Senha</label>
-                <input type="password" name="password" required autocomplete="new-password" placeholder="Mínimo 8 caracteres" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                <div class="relative">
+                    <input id="reset_password" type="password" name="password" required autocomplete="new-password" placeholder="Mínimo 8 caracteres" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 pr-12 text-slate-900 navy-border outline-none transition-all">
+                    <button type="button" data-toggle-password="reset_password" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div>
                 <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Confirmar Nova Senha</label>
-                <input type="password" name="password_confirmation" required autocomplete="new-password" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                <div class="relative">
+                    <input id="reset_password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 pr-12 text-slate-900 navy-border outline-none transition-all">
+                    <button type="button" data-toggle-password="reset_password_confirmation" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="w-full navy-bg text-white font-bold py-4 rounded-2xl hover:bg-blue-800 transition-all shadow-lg mt-2">
@@ -60,5 +76,16 @@
             Após a redefinição, você será direcionado ao login.
         </p>
     </div>
+
+    <script>
+        document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-toggle-password');
+                const input = document.getElementById(id);
+                if (!input) return;
+                input.type = input.type === 'password' ? 'text' : 'password';
+            });
+        });
+    </script>
 </body>
 </html>
