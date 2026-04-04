@@ -4,18 +4,31 @@ namespace App\Http\Controllers\Admin;
  
 use App\Http\Controllers\Controller;
 use App\Models\{Prato, Categoria, Insumo};
+use App\Services\PratoEstoqueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
  
 class CardapioController extends Controller
 {
-    public function index() {
-        $pratos = Prato::withTrashed()
+    public function index(Request $request) {
+        $categoriaId = $request->query('categoria');
+
+        if ($categoriaId !== null) {
+            $request->validate([
+                'categoria' => 'nullable|integer|exists:categorias,id',
+            ]);
+        }
+
+        $pratosQuery = Prato::withTrashed()
             ->with(['categoria', 'insumos:id,nome,unidade'])
             ->orderBy('categoria_id')
             ->orderBy('ordem')
-            ->paginate(20);
+            ->when(filled($categoriaId), fn ($q) => $q->where('categoria_id', (int) $categoriaId));
+
+        $pratos = $pratosQuery
+            ->paginate(20)
+            ->appends($request->query());
         $categorias = Categoria::orderBy('ordem')->get();
         $insumos = Insumo::ativos()->orderBy('nome')->get(['id', 'nome', 'unidade', 'categoria']);
 
@@ -55,6 +68,8 @@ class CardapioController extends Controller
         }
  
         $this->syncInsumos($prato, $request->input('insumos', []));
+
+        app(PratoEstoqueService::class)->syncAtivoForPrato($prato);
  
         return response()->json(['success' => true, 'prato' => $prato->load(['categoria', 'insumos'])]);
     }
@@ -89,6 +104,8 @@ class CardapioController extends Controller
 
         $prato->update($data);
         $this->syncInsumos($prato, $request->input('insumos', []));
+
+        app(PratoEstoqueService::class)->syncAtivoForPrato($prato);
 
         return response()->json(['success' => true, 'prato' => $prato->fresh(['categoria', 'insumos'])]);
     }

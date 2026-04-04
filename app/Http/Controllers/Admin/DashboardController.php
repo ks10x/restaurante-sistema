@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\{Pedido, User, Prato, Insumo};
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -12,6 +13,7 @@ class DashboardController extends Controller
     public function index()
     {
         $hoje = Carbon::today();
+        $hasPedidoItensTable = Schema::hasTable('pedido_itens');
 
         $kpis = [
             'faturamento_hoje' => Pedido::whereDate('created_at',$hoje)->where('pagamento_status','aprovado')->sum('total'),
@@ -31,32 +33,40 @@ class DashboardController extends Controller
             ->whereBetween('created_at',[now()->subDays(6)->startOfDay(),now()->endOfDay()])
             ->groupBy(DB::raw('DATE(created_at)'))->orderBy('data')->get();
 
-        $topPratos = DB::table('pedido_itens as pi')
-            ->join('pratos as p','pi.prato_id','=','p.id')
-            ->join('pedidos as pd','pi.pedido_id','=','pd.id')
-            ->select('p.nome', DB::raw('SUM(pi.quantidade) as total'), DB::raw('SUM(pi.subtotal) as receita'))
-            ->where('pd.status','entregue')
-            ->whereDate('pd.created_at','>=',now()->subDays(30))
-            ->groupBy('p.id','p.nome')->orderByDesc('total')->limit(5)->get();
+        $topPratos = collect();
+        $ingredientesMaisUsados = collect();
+        $pedidosRecentesQuery = Pedido::with(['usuario'])->latest()->limit(8);
 
-        $pedidosRecentes = Pedido::with(['usuario','itens'])->latest()->limit(8)->get();
+        if ($hasPedidoItensTable) {
+            $topPratos = DB::table('pedido_itens as pi')
+                ->join('pratos as p','pi.prato_id','=','p.id')
+                ->join('pedidos as pd','pi.pedido_id','=','pd.id')
+                ->select('p.nome', DB::raw('SUM(pi.quantidade) as total'), DB::raw('SUM(pi.subtotal) as receita'))
+                ->where('pd.status','entregue')
+                ->whereDate('pd.created_at','>=',now()->subDays(30))
+                ->groupBy('p.id','p.nome')->orderByDesc('total')->limit(5)->get();
 
-        $ingredientesMaisUsados = DB::table('pedido_itens as pi')
-            ->join('pedidos as pd', 'pi.pedido_id', '=', 'pd.id')
-            ->join('prato_insumos as piv', 'pi.prato_id', '=', 'piv.prato_id')
-            ->join('insumos as i', 'piv.insumo_id', '=', 'i.id')
-            ->select(
-                'i.nome',
-                'i.unidade',
-                DB::raw('SUM(pi.quantidade * piv.quantidade) as consumo_estimado'),
-                DB::raw('SUM(pi.quantidade * piv.quantidade * i.preco_unitario) as custo_estimado')
-            )
-            ->where('pd.pagamento_status', 'aprovado')
-            ->whereDate('pd.created_at', '>=', now()->subDays(30))
-            ->groupBy('i.id', 'i.nome', 'i.unidade')
-            ->orderByDesc('consumo_estimado')
-            ->limit(5)
-            ->get();
+            $ingredientesMaisUsados = DB::table('pedido_itens as pi')
+                ->join('pedidos as pd', 'pi.pedido_id', '=', 'pd.id')
+                ->join('prato_insumos as piv', 'pi.prato_id', '=', 'piv.prato_id')
+                ->join('insumos as i', 'piv.insumo_id', '=', 'i.id')
+                ->select(
+                    'i.nome',
+                    'i.unidade',
+                    DB::raw('SUM(pi.quantidade * piv.quantidade) as consumo_estimado'),
+                    DB::raw('SUM(pi.quantidade * piv.quantidade * i.preco_unitario) as custo_estimado')
+                )
+                ->where('pd.pagamento_status', 'aprovado')
+                ->whereDate('pd.created_at', '>=', now()->subDays(30))
+                ->groupBy('i.id', 'i.nome', 'i.unidade')
+                ->orderByDesc('consumo_estimado')
+                ->limit(5)
+                ->get();
+
+            $pedidosRecentesQuery->with('itens');
+        }
+
+        $pedidosRecentes = $pedidosRecentesQuery->get();
 
         $pratosComprometidos = Prato::query()
             ->with(['categoria:id,nome', 'insumos' => function ($query) {
@@ -67,6 +77,6 @@ class DashboardController extends Controller
             ->limit(6)
             ->get();
 
-        return view('admin.dashboard', compact('kpis','vendas7dias','topPratos','pedidosRecentes', 'ingredientesMaisUsados', 'pratosComprometidos'));
+        return view('admin.dashboard', compact('kpis','vendas7dias','topPratos','pedidosRecentes', 'ingredientesMaisUsados', 'pratosComprometidos', 'hasPedidoItensTable'));
     }
 }

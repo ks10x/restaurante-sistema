@@ -14,13 +14,15 @@ class CardapioController extends Controller
         $categorias = Categoria::where('ativa', 1)
             ->orderBy('ordem')
             ->with(['pratos' => function($q) {
-                $q->where('disponivel', 1)
+                $q->where('ativo', 1)
+                  ->where('disponivel', 1)
                   ->orderBy('ordem')
                   ->with(['ingredientes', 'insumos']); // ← adicionado aqui
             }])
             ->get();
 
-        $destaques = Prato::where('disponivel', 1) 
+        $destaques = Prato::where('ativo', 1)
+            ->where('disponivel', 1)
             ->where('destaque', 1)
             ->with('categoria')
             ->get();
@@ -36,7 +38,7 @@ class CardapioController extends Controller
     
     public function show(Prato $prato)
     {
-        abort_if(!$prato->disponivel, 404);
+        abort_if(!$prato->disponivel || !$prato->ativo, 404);
         $prato->load('ingredientes', 'opcoes.itens', 'avaliacoes.usuario');
  
         $relacionados = Prato::disponivel()

@@ -4,6 +4,7 @@ namespace App\Models;
  
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Services\PratoEstoqueService;
  
 class Insumo extends Model
 {
@@ -78,5 +79,20 @@ class Insumo extends Model
             'quantidade_anterior' => $anterior,
             'quantidade_posterior'=> $posterior,
         ], $extra));
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Insumo $insumo) {
+            if ($insumo->wasRecentlyCreated) {
+                return;
+            }
+
+            if (! $insumo->wasChanged(['quantidade_atual', 'ativo'])) {
+                return;
+            }
+
+            app(PratoEstoqueService::class)->syncAtivoForInsumo($insumo);
+        });
     }
 }

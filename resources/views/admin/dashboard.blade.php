@@ -576,7 +576,8 @@ body {
             </td>
             <td>
               <div class="order-name">{{ $pedido->usuario?->name ?? 'Cliente' }}</div>
-              <div class="order-items">{{ $pedido->itens?->count() ?? 0 }} {{ ($pedido->itens?->count() ?? 0) === 1 ? 'item' : 'itens' }}</div>
+              @php($itensCount = $hasPedidoItensTable ? ($pedido->itens?->count() ?? 0) : 0)
+              <div class="order-items">{{ $itensCount }} {{ $itensCount === 1 ? 'item' : 'itens' }}</div>
             </td>
             <td><span class="status-pill {{ $s['class'] }}">{{ $s['label'] }}</span></td>
             <td style="text-align:right">

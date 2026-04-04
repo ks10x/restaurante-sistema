@@ -9,15 +9,26 @@ class PedidoItem extends Model
 {
     use HasFactory;
 
+    protected $table = 'pedido_itens';
+
+    public $timestamps = false;
+
     protected $fillable = [
-        'pedido_id', 'prato_id', 'quantidade', 'preco_unitario',
-        'opcoes_escolhidas', 'observacoes_item'
+        'pedido_id',
+        'prato_id',
+        'nome_prato',
+        'preco_unitario',
+        'quantidade',
+        'subtotal',
+        'opcoes',
+        'observacao',
     ];
 
     protected $casts = [
-        'quantidade'      => 'integer',
-        'preco_unitario'  => 'decimal:2',
-        'opcoes_escolhidas' => 'array', // Armazena as opções escolhidas como JSON
+        'quantidade' => 'integer',
+        'preco_unitario' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'opcoes' => 'array',
     ];
 
     public function pedido()
@@ -30,9 +41,4 @@ class PedidoItem extends Model
         return $this->belongsTo(Prato::class);
     }
 
-    // Accessor para calcular o subtotal do item
-    public function getSubtotalAttribute(): float
-    {
-        return $this->quantidade * $this->preco_unitario;
-    }
 }

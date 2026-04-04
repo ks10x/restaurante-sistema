@@ -83,9 +83,9 @@ class CheckoutController extends Controller
             $subtotal = 0;
 
             // Validate items and compute subtotal from DB prices (security)
-            $itensPronto = $itens->map(function ($item) use (&$subtotal) {
+                $itensPronto = $itens->map(function ($item) use (&$subtotal) {
                 $prato = Prato::findOrFail($item['prato_id']);
-                abort_if(!$prato->disponivel, 422, "Prato {$prato->nome} indisponível.");
+                abort_if(!$prato->disponivel || !$prato->ativo, 422, "Prato {$prato->nome} indisponível.");
 
                 $preco = $prato->preco_ativo;
                 $itemTotal = $preco * $item['qtd'];
@@ -93,8 +93,12 @@ class CheckoutController extends Controller
 
                 return [
                     'prato_id'       => $prato->id,
+                    'nome_prato'     => $prato->nome,
                     'preco_unitario' => $preco,
                     'quantidade'     => $item['qtd'],
+                    'subtotal'       => $itemTotal,
+                    'opcoes'         => $item['opcoes'] ?? null,
+                    'observacao'     => $item['observacao'] ?? null,
                 ];
             });
 

@@ -16,15 +16,24 @@
         </div>
     </div>
 
-    <!-- Filtros de Categoria HTML Tabs (Simplificado) -->
+    <!-- Filtros de Categoria (Tabs) -->
+    @php($categoriaAtual = request('categoria'))
     <div class="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 hide-scrollbar">
-        <button class="px-4 py-2 rounded-t-lg bg-white border-t border-l border-r border-slate-200 font-bold text-brand-600 text-sm whitespace-nowrap">
+        <a
+            href="{{ route('admin.cardapio.index') }}"
+            class="px-4 py-2 rounded-t-lg whitespace-nowrap text-sm transition-colors {{ blank($categoriaAtual) ? 'bg-white border-t border-l border-r border-slate-200 font-bold text-brand-600' : 'text-slate-500 hover:text-slate-800 font-medium' }}"
+            aria-current="{{ blank($categoriaAtual) ? 'page' : 'false' }}"
+        >
             Todos
-        </button>
+        </a>
         @foreach($categorias as $cat)
-            <button class="px-4 py-2 rounded-t-lg text-slate-500 hover:text-slate-800 text-sm font-medium whitespace-nowrap">
+            <a
+                href="{{ route('admin.cardapio.index', ['categoria' => $cat->id]) }}"
+                class="px-4 py-2 rounded-t-lg whitespace-nowrap text-sm transition-colors {{ (string) $categoriaAtual === (string) $cat->id ? 'bg-white border-t border-l border-r border-slate-200 font-bold text-brand-600' : 'text-slate-500 hover:text-slate-800 font-medium' }}"
+                aria-current="{{ (string) $categoriaAtual === (string) $cat->id ? 'page' : 'false' }}"
+            >
                 {{ $cat->nome }}
-            </button>
+            </a>
         @endforeach
     </div>
 
@@ -98,7 +107,7 @@
 
     <!-- Paginação -->
     <div class="mt-6 flex justify-center">
-        {{ $pratos->links() }}
+        {{ $pratos->appends(request()->query())->links() }}
     </div>
 
     <!-- Modal Form Prato -->

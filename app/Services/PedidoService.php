@@ -17,7 +17,7 @@ class PedidoService
             // Calcular subtotal e validar pratos
             $itensPronto = $itens->map(function ($item) use (&$subtotal) {
                 $prato = Prato::findOrFail($item['prato_id']);
-                abort_if(!$prato->disponivel, 422, "Prato {$prato->nome} indisponível.");
+                abort_if(!$prato->disponivel || !$prato->ativo, 422, "Prato {$prato->nome} indisponível.");
  
                 $preco    = $prato->preco_ativo;
                 $itemTotal = $preco * $item['quantidade'];

@@ -21,6 +21,7 @@ class Prato extends Model
         'imagens_extras' => 'array',
         'preco'            => 'decimal:2',
         'preco_promocional'=> 'decimal:2',
+        'ativo'            => 'boolean',
         'disponivel'       => 'boolean',
         'destaque'         => 'boolean',
     ];
@@ -50,7 +51,7 @@ class Prato extends Model
             ->toArray();
     }
  
-    public function scopeDisponivel($q)  { return $q->where('disponivel', 1); }
+    public function scopeDisponivel($q)  { return $q->where('ativo', 1)->where('disponivel', 1); }
     public function scopeDestaques($q)   { return $q->where('destaque', 1); }
     public function scopeByCategoria($q, $catId) { return $q->where('categoria_id', $catId); }
     public function scopeComprometidos(Builder $query)
