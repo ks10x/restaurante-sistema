@@ -164,7 +164,9 @@ Route::middleware(['auth', 'role:0,1', 'verified.contacts'])
     ->name('cozinha.')
     ->group(function () {
         Route::get('/', [FilaController::class, 'index'])->name('fila');
+        Route::get('/dashboard', [FilaController::class, 'dashboard'])->name('dashboard');
         Route::patch('/pedidos/{pedido}/avancar', [FilaController::class, 'avancarStatus'])->name('pedido.avancar');
+        Route::patch('/pedidos/{pedido}/cancelar', [FilaController::class, 'cancelar'])->name('pedido.cancelar');
         Route::get('/api/pedidos', [FilaController::class, 'pedidosApi'])->name('api.pedidos');
     });
 

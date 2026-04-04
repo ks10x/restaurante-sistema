@@ -38,7 +38,7 @@ class PedidoItem extends Model
 
     public function prato()
     {
-        return $this->belongsTo(Prato::class);
+        return $this->belongsTo(Prato::class)->withTrashed();
     }
 
 }
