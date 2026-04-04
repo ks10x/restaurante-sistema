@@ -1,545 +1,119 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tela da Cozinha — Bella Cucina</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+﻿@include('cozinha.partials.layout-start', ['title' => 'Fila da Cozinha - Bella Cucina'])
+
+@php
+$serializePedido = function ($pedido) {
+    return [
+        'id' => $pedido->id,
+        'codigo' => $pedido->codigo,
+        'status' => $pedido->status,
+        'cliente' => $pedido->usuario->name ?? null,
+        'tipo_entrega' => $pedido->tipo_entrega,
+        'minutos_decorridos' => $pedido->minutos_decorridos,
+        'faixa_tempo' => $pedido->faixa_tempo,
+        'progresso' => $pedido->progresso,
+        'total' => (float) $pedido->total,
+        'total_itens' => $pedido->total_itens,
+        'observacoes' => $pedido->observacoes_limpa,
+        'endereco' => $pedido->endereco ? [
+            'logradouro' => $pedido->endereco->logradouro,
+            'numero' => $pedido->endereco->numero,
+            'bairro' => $pedido->endereco->bairro,
+            'cidade' => $pedido->endereco->cidade,
+            'estado' => $pedido->endereco->estado ?? $pedido->endereco->uf,
+            'texto' => $pedido->endereco_formatado,
+        ] : null,
+        'avancar_url' => route('cozinha.pedido.avancar', $pedido),
+        'cancelar_url' => route('cozinha.pedido.cancelar', $pedido),
+        'itens' => $pedido->itens->map(function ($item) {
+            return [
+                'nome' => $item->nome_exibicao,
+                'quantidade' => $item->quantidade,
+                'descricao' => $item->descricao_curta,
+                'imagem' => $item->foto_url,
+                'observacao' => $item->observacao_limpa,
+                'ingredientes' => $item->ingredientes_lista,
+                'opcoes' => is_array($item->opcoes ?? null) ? $item->opcoes : [],
+            ];
+        })->values()->all(),
+    ];
+};
+$initialPedidos = [
+    'confirmado' => $pedidosPorStatus['confirmado']->map($serializePedido)->values()->all(),
+    'em_producao' => $pedidosPorStatus['em_producao']->map($serializePedido)->values()->all(),
+    'saindo_entrega' => $pedidosPorStatus['saindo_entrega']->map($serializePedido)->values()->all(),
+];
+@endphp
+
 <style>
-:root{
-  --bg:    #F8FAFC;
-  --bg2:   #FFFFFF;
-  --bg3:   #F1F5F9;
-  --col:   rgba(30,58,138,0.1);
-  --text:  #0F172A;
-  --text-m:#64748B;
-  --text-s:#94A3B8;
-  --amber: #F5A623;
-  --green: #2ECC71;
-  --red:   #E74C3C;
-  --blue:  #1E3A8A; /* Navy Blue */
-  --orange:#E67E22;
-  --mono:  'JetBrains Mono', monospace;
-  --sans:  'DM Sans', sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column}
-
-/* TOP BAR */
-.topbar{
-  background:var(--bg2);border-bottom:1px solid var(--col);
-  padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;
-}
-.topbar-left{display:flex;align-items:center;gap:1.5rem}
-.topbar-logo{font-family:var(--mono);font-size:.85rem;color:var(--blue);letter-spacing:.05em;font-weight:700}
-.topbar-status{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--green)}
-.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.topbar-clock{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:.05em}
-.topbar-right{display:flex;align-items:center;gap:.75rem}
-.topbar-stat{
-  background:var(--bg3);border:1px solid var(--col);
-  border-radius:8px;padding:.35rem .85rem;
-  text-align:center;font-size:.7rem;
-}
-.stat-num{font-family:var(--mono);font-size:1rem;font-weight:700}
-.stat-num.amber{color:var(--amber)}
-.stat-num.green{color:var(--green)}
-.stat-num.red{color:var(--red)}
-
-/* COLUNAS KANBAN */
-.kanban{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:0}
-.col{
-  display:flex;flex-direction:column;
-  border-right:1px solid var(--col);
-  overflow:hidden;
-}
-.col:last-child{border-right:none}
-.col-header{
-  padding:1rem 1.25rem;
-  border-bottom:1px solid var(--col);
-  display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:10;
-  backdrop-filter:blur(10px);
-}
-.col-header.confirmado{background:rgba(52,152,219,0.08);border-bottom-color:rgba(52,152,219,0.2)}
-.col-header.em_producao{background:rgba(245,166,35,0.08);border-bottom-color:rgba(245,166,35,0.2)}
-.col-header.saindo{background:rgba(46,204,113,0.08);border-bottom-color:rgba(46,204,113,0.2)}
-.col-title{display:flex;align-items:center;gap:.6rem;font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
-.col-dot{width:8px;height:8px;border-radius:50%}
-.col-count{
-  font-family:var(--mono);font-size:.8rem;font-weight:700;
-  background:var(--bg3);border:1px solid var(--col);
-  padding:.2rem .55rem;border-radius:6px;
-}
-.col-body{flex:1;overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.75rem}
-
-/* CARD DE PEDIDO */
-.pedido-card{
-  background:var(--bg2);border:1px solid var(--col);
-  border-radius:12px;overflow:hidden;
-  transition:.2s;
-}
-.pedido-card.urgente{border-color:rgba(231,76,60,0.5);animation:urgente 1.5s ease infinite}
-@keyframes urgente{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,0)}50%{box-shadow:0 0 0 4px rgba(231,76,60,0.2)}}
-.pedido-header{
-  padding:.75rem 1rem;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--col);
-}
-.pedido-codigo{font-family:var(--mono);font-size:1.1rem;font-weight:700;letter-spacing:.05em}
-.pedido-timer{
-  font-family:var(--mono);font-size:.8rem;font-weight:600;
-  padding:.2rem .5rem;border-radius:6px;
-}
-.timer-ok{background:rgba(46,204,113,0.12);color:var(--green)}
-.timer-warn{background:rgba(245,166,35,0.12);color:var(--amber)}
-.timer-bad{background:rgba(231,76,60,0.15);color:var(--red)}
-.pedido-cliente{font-size:.75rem;color:var(--text-m);margin-top:.2rem}
-.pedido-body{padding:.85rem 1rem}
-.item-row{
-  display:flex;align-items:flex-start;gap:.75rem;
-  padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,0.04);
-}
-.item-row:last-child{border-bottom:none}
-.item-qty{
-  font-family:var(--mono);font-size:.85rem;font-weight:700;
-  color:var(--amber);min-width:24px;padding-top:.1rem;
-}
-.item-info{flex:1}
-.item-nome{font-size:.875rem;font-weight:500;line-height:1.3}
-.item-opts{font-size:.75rem;color:var(--text-s);margin-top:.2rem;font-style:italic}
-.item-obs{
-  font-size:.72rem;color:var(--amber);
-  background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);
-  border-radius:5px;padding:.2rem .5rem;margin-top:.3rem;display:inline-block;
-}
-.pedido-entrega{
-  margin:.5rem 0 0;padding:.5rem .85rem;
-  background:var(--bg3);border-radius:7px;
-  font-size:.75rem;color:var(--text-m);display:flex;align-items:center;gap:.5rem;
-}
-.pedido-obs-geral{
-  margin:.5rem 0 0;padding:.5rem .85rem;
-  background:rgba(231,76,60,0.06);border:1px solid rgba(231,76,60,0.15);
-  border-radius:7px;font-size:.75rem;color:#E09080;
-}
-.pedido-footer{
-  padding:.75rem 1rem;border-top:1px solid var(--col);
-  display:flex;align-items:center;justify-content:space-between;gap:.5rem;
-}
-.btn-avancar{
-  flex:1;padding:.65rem;border:none;border-radius:8px;
-  font-family:var(--sans);font-size:.8rem;font-weight:600;cursor:pointer;
-  transition:.2s;letter-spacing:.03em;
-}
-.btn-avancar.confirmar{background:rgba(52,152,219,0.15);color:var(--blue);border:1px solid rgba(52,152,219,0.3)}
-.btn-avancar.confirmar:hover{background:rgba(52,152,219,0.25)}
-.btn-avancar.produzir{background:rgba(245,166,35,0.15);color:var(--amber);border:1px solid rgba(245,166,35,0.3)}
-.btn-avancar.produzir:hover{background:rgba(245,166,35,0.25)}
-.btn-avancar.entregar{background:rgba(46,204,113,0.15);color:var(--green);border:1px solid rgba(46,204,113,0.3)}
-.btn-avancar.entregar:hover{background:rgba(46,204,113,0.25)}
-.btn-cancel{
-  padding:.65rem .75rem;border:1px solid rgba(231,76,60,0.3);
-  background:rgba(231,76,60,0.08);color:var(--red);
-  border-radius:8px;cursor:pointer;font-size:.8rem;transition:.2s;
-}
-.btn-cancel:hover{background:rgba(231,76,60,0.15)}
-
-/* TOAST / NOTIFICAÇÃO */
-.toast{
-  position:fixed;top:70px;right:1.5rem;z-index:999;
-  background:var(--bg2);border:1px solid rgba(46,204,113,0.3);
-  border-radius:10px;padding:1rem 1.25rem;
-  font-size:.875rem;color:var(--green);
-  display:flex;align-items:center;gap:.75rem;
-  animation:slideIn .3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  max-width:320px;
-}
-.toast.novo{border-color:rgba(245,166,35,0.5);color:var(--amber);animation:slideIn .3s ease,ring .3s ease .3s}
-@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-.toast-icon{font-size:1.2rem}
-
-/* BARRA DE PROGRESSO */
-.progress-bar{height:3px;background:var(--col)}
-.progress-fill{height:100%;transition:width .5s ease;border-radius:0 2px 2px 0}
-
-/* SCROLL */
-.col-body::-webkit-scrollbar{width:4px}
-.col-body::-webkit-scrollbar-track{background:transparent}
-.col-body::-webkit-scrollbar-thumb{background:var(--col);border-radius:2px}
-
-/* EMPTY STATE */
-.empty-col{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:.75rem;color:var(--text-s);padding:2rem;text-align:center;
-}
-.empty-col .icon{font-size:2rem;opacity:.4}
-.empty-col p{font-size:.8rem}
+.page-wrap{max-width:1600px;margin:0 auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border:1px solid rgba(15,23,42,.08);border-radius:24px;padding:18px 20px;box-shadow:0 20px 40px rgba(15,23,42,.08);margin-bottom:18px}
+.brand-inline{display:flex;align-items:center;gap:14px}.brand-mark-inline{width:44px;height:44px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;padding:7px;border:1px solid rgba(15,23,42,.08)}.brand-title-inline{font-size:1.2rem;font-weight:700}.brand-sub-inline{font-size:.86rem;color:#64748b}.clock{font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stat{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:16px;box-shadow:0 20px 40px rgba(15,23,42,.08)}.stat small{display:block;color:#64748b;text-transform:uppercase;letter-spacing:.08em;font-size:.73rem;margin-bottom:8px}.stat strong{font-family:'IBM Plex Mono',monospace;font-size:1.45rem}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.col{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:24px;overflow:hidden;box-shadow:0 20px 40px rgba(15,23,42,.08)}.col-head{padding:16px 18px;border-bottom:1px solid rgba(15,23,42,.08);display:flex;align-items:center;justify-content:space-between}.col-title{display:flex;gap:10px;align-items:center;font-weight:700}.dot{width:10px;height:10px;border-radius:50%}.count{font-family:'IBM Plex Mono',monospace;background:#eff6ff;padding:6px 10px;border-radius:999px}.col-body{padding:14px;display:flex;flex-direction:column;gap:14px;min-height:72vh}
+.card{background:#fff;border:2px solid rgba(15,23,42,.08);border-radius:20px;overflow:hidden}.card.status-confirmado{border-color:rgba(29,78,216,.34);box-shadow:0 0 0 3px rgba(29,78,216,.08)}.card.status-em_producao{border-color:rgba(217,119,6,.34);box-shadow:0 0 0 3px rgba(217,119,6,.08)}.card.status-saindo_entrega{border-color:rgba(5,150,105,.34);box-shadow:0 0 0 3px rgba(5,150,105,.08)}.card.critico{box-shadow:0 0 0 4px rgba(220,38,38,.12)}.progress{height:5px;background:#e2e8f0}.progress span{display:block;height:100%}.card-main{padding:16px}.card-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px}.code{font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:600}.client{font-size:.86rem;color:#64748b;margin-top:4px}.timer{padding:7px 10px;border-radius:999px;font-size:.76rem;font-weight:700}.timer.ok{background:rgba(5,150,105,.1);color:#059669}.timer.atencao{background:rgba(217,119,6,.1);color:#d97706}.timer.critico{background:rgba(220,38,38,.1);color:#dc2626}
+.items{display:flex;flex-direction:column;gap:10px}.item{display:grid;grid-template-columns:58px 1fr;gap:10px;background:#f8fafc;border-radius:16px;padding:10px}.item img{width:58px;height:58px;border-radius:12px;object-fit:cover;background:#dbeafe}.item-name{font-weight:700;font-size:.92rem}.item-desc,.item-meta{font-size:.8rem;color:#64748b;margin-top:4px;line-height:1.4}.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.tag{font-size:.72rem;border:1px solid rgba(15,23,42,.08);background:#fff;padding:4px 8px;border-radius:999px;color:#64748b}
+.note{margin-top:10px;padding:10px 12px;border-radius:14px;font-size:.82rem}.address{background:#eff6ff;color:#1e40af}.obs{background:#fef2f2;color:#b91c1c}.actions{display:flex;gap:10px;margin-top:12px}.btn{border:none;border-radius:14px;padding:12px 14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}.btn-primary{flex:1;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff}.btn-danger{background:#fff;color:#dc2626;border:1px solid rgba(220,38,38,.18)}.empty{min-height:180px;border:1px dashed rgba(148,163,184,.45);border-radius:18px;display:flex;align-items:center;justify-content:center;text-align:center;color:#64748b;padding:20px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.58);display:none;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.modal-card{width:min(100%,440px);background:#fff;border-radius:24px;padding:22px;box-shadow:0 20px 40px rgba(15,23,42,.08)}.modal-card h3{margin-bottom:8px}.modal-card p{color:#64748b;line-height:1.5;margin-bottom:14px}.modal-card textarea{width:100%;min-height:110px;border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:12px 14px;font-family:'DM Sans',sans-serif;resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.toast{position:fixed;right:20px;bottom:20px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:14px 16px;display:none;align-items:center;gap:10px;box-shadow:0 20px 40px rgba(15,23,42,.08)}.toast.show{display:flex}
+@media(max-width:1200px){.stats{grid-template-columns:repeat(2,1fr)}.board{grid-template-columns:1fr}}@media(max-width:720px){.topbar,.actions{flex-direction:column;align-items:stretch}.stats{grid-template-columns:1fr}}
 </style>
-</head>
-<body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="topbar-logo">COZINHA // BELLA CUCINA</div>
-    <div class="topbar-status">
-      <div class="status-dot"></div>
-      Sistema Online
+<div class="page-wrap">
+  <div class="topbar">
+    <div class="brand-inline">
+      <div class="brand-mark-inline">
+        <x-application-logo class="w-full h-full fill-current text-slate-900" />
+      </div>
+      <div>
+        <div class="brand-title-inline">Fila da Cozinha</div>
+        <div class="brand-sub-inline">Ambiente operacional para marcar pedidos dinamicos em tempo real</div>
+      </div>
     </div>
+    <div class="clock" id="liveClock">00:00:00</div>
   </div>
-  <div class="topbar-clock" id="clock">00:00:00</div>
-  <div class="topbar-right">
-    <div class="topbar-stat">
-      <div class="stat-num amber" id="contConfirmado">2</div>
-      <div style="font-size:.65rem;color:var(--text-s)">Aguardando</div>
-    </div>
-    <div class="topbar-stat">
-      <div class="stat-num amber" id="contProducao">1</div>
-      <div style="font-size:.65rem;color:var(--text-s)">Em Produção</div>
-    </div>
-    <div class="topbar-stat">
-      <div class="stat-num green" id="contEntregues">14</div>
-      <div style="font-size:.65rem;color:var(--text-s)">Entregues hoje</div>
-    </div>
-    <div class="topbar-stat">
-      <div class="stat-num" style="color:var(--text-m)">R$ 1.284,50</div>
-      <div style="font-size:.65rem;color:var(--text-s)">Faturamento hoje</div>
-    </div>
+
+  <div class="stats">
+    <div class="stat"><small>Aguardando</small><strong id="stat-confirmado">{{ $pedidosPorStatus['confirmado']->count() }}</strong></div>
+    <div class="stat"><small>Em Producao</small><strong id="stat-producao">{{ $pedidosPorStatus['em_producao']->count() }}</strong></div>
+    <div class="stat"><small>Prontos / Saindo</small><strong id="stat-saindo">{{ $pedidosPorStatus['saindo_entrega']->count() }}</strong></div>
+    <div class="stat"><small>Total Ativo</small><strong id="stat-total">{{ $pedidosPorStatus['confirmado']->count() + $pedidosPorStatus['em_producao']->count() + $pedidosPorStatus['saindo_entrega']->count() }}</strong></div>
+  </div>
+
+  <div class="board">
+    <section class="col"><div class="col-head"><div class="col-title"><span class="dot" style="background:#1d4ed8"></span>Aguardando Producao</div><div class="count" id="count-confirmado">{{ $pedidosPorStatus['confirmado']->count() }}</div></div><div class="col-body" id="col-confirmado"></div></section>
+    <section class="col"><div class="col-head"><div class="col-title"><span class="dot" style="background:#d97706"></span>Em Producao</div><div class="count" id="count-em_producao">{{ $pedidosPorStatus['em_producao']->count() }}</div></div><div class="col-body" id="col-em_producao"></div></section>
+    <section class="col"><div class="col-head"><div class="col-title"><span class="dot" style="background:#059669"></span>Pronto / Saindo</div><div class="count" id="count-saindo_entrega">{{ $pedidosPorStatus['saindo_entrega']->count() }}</div></div><div class="col-body" id="col-saindo_entrega"></div></section>
   </div>
 </div>
 
-<!-- KANBAN -->
-<div class="kanban">
-
-  <!-- COLUNA: CONFIRMADO (Aguardando Produção) -->
-  <div class="col">
-    <div class="col-header confirmado">
-      <div class="col-title">
-        <div class="col-dot" style="background:var(--blue)"></div>
-        Aguardando Produção
-      </div>
-      <span class="col-count" style="color:var(--blue)" id="cnt-confirmado">2</span>
-    </div>
-    <div class="col-body" id="col-confirmado">
-
-      <!-- PEDIDO 1 -->
-      <div class="pedido-card urgente" id="pedido-247">
-        <div class="progress-bar"><div class="progress-fill" style="width:80%;background:var(--red)"></div></div>
-        <div class="pedido-header">
-          <div>
-            <div class="pedido-codigo">#AB3K9X2M</div>
-            <div class="pedido-cliente">👤 Carlos Mendes · Entrega</div>
-          </div>
-          <div>
-            <div class="pedido-timer timer-bad">⏱ 24 min</div>
-          </div>
-        </div>
-        <div class="pedido-body">
-          <div class="item-row">
-            <div class="item-qty">2x</div>
-            <div class="item-info">
-              <div class="item-nome">Filé Mignon Grelhado</div>
-              <div class="item-opts">Ponto: Ao ponto · Sem cebola</div>
-            </div>
-          </div>
-          <div class="item-row">
-            <div class="item-qty">1x</div>
-            <div class="item-info">
-              <div class="item-nome">Bruschetta Clássica</div>
-              <div class="item-opts">—</div>
-            </div>
-          </div>
-          <div class="item-row">
-            <div class="item-qty">2x</div>
-            <div class="item-info">
-              <div class="item-nome">Suco de Laranja Natural</div>
-              <div class="item-obs">⚠ Sem gelo por favor</div>
-            </div>
-          </div>
-          <div class="pedido-entrega">🏠 Rua das Flores, 142 · Bairro Jardins</div>
-          <div class="pedido-obs-geral">⚠️ Alergia a amendoim! Verificar ingredientes.</div>
-        </div>
-        <div class="pedido-footer">
-          <button class="btn-avancar confirmar" onclick="avancarStatus('247', 'em_producao', this)">
-            ▶ Iniciar Produção
-          </button>
-          <button class="btn-cancel" onclick="cancelarPedido('247')">✕</button>
-        </div>
-      </div>
-
-      <!-- PEDIDO 2 -->
-      <div class="pedido-card" id="pedido-251">
-        <div class="progress-bar"><div class="progress-fill" style="width:20%;background:var(--green)"></div></div>
-        <div class="pedido-header">
-          <div>
-            <div class="pedido-codigo">#XR72MK9P</div>
-            <div class="pedido-cliente">👤 Ana Lima · Retirada no local</div>
-          </div>
-          <div>
-            <div class="pedido-timer timer-ok">⏱ 5 min</div>
-          </div>
-        </div>
-        <div class="pedido-body">
-          <div class="item-row">
-            <div class="item-qty">1x</div>
-            <div class="item-info">
-              <div class="item-nome">Tagliatelle Bolognese</div>
-              <div class="item-opts">Parmesão extra</div>
-            </div>
-          </div>
-          <div class="item-row">
-            <div class="item-qty">1x</div>
-            <div class="item-info">
-              <div class="item-nome">Tiramisù Artesanal</div>
-            </div>
-          </div>
-          <div class="pedido-entrega">🏪 Retirada no balcão</div>
-        </div>
-        <div class="pedido-footer">
-          <button class="btn-avancar confirmar" onclick="avancarStatus('251', 'em_producao', this)">
-            ▶ Iniciar Produção
-          </button>
-          <button class="btn-cancel" onclick="cancelarPedido('251')">✕</button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- COLUNA: EM PRODUÇÃO -->
-  <div class="col">
-    <div class="col-header em_producao">
-      <div class="col-title">
-        <div class="col-dot" style="background:var(--amber)"></div>
-        Em Produção
-      </div>
-      <span class="col-count" style="color:var(--amber)" id="cnt-producao">1</span>
-    </div>
-    <div class="col-body" id="col-producao">
-
-      <div class="pedido-card" id="pedido-244">
-        <div class="progress-bar"><div class="progress-fill" style="width:60%;background:var(--amber)"></div></div>
-        <div class="pedido-header">
-          <div>
-            <div class="pedido-codigo">#PQ91LF4C</div>
-            <div class="pedido-cliente">👤 Roberto Costa · Entrega</div>
-          </div>
-          <div>
-            <div class="pedido-timer timer-warn">⏱ 15 min</div>
-          </div>
-        </div>
-        <div class="pedido-body">
-          <div class="item-row">
-            <div class="item-qty">1x</div>
-            <div class="item-info">
-              <div class="item-nome">Risoto de Cogumelos</div>
-              <div class="item-opts">Sem parmesão</div>
-            </div>
-          </div>
-          <div class="item-row">
-            <div class="item-qty">1x</div>
-            <div class="item-info">
-              <div class="item-nome">Filé ao Molho Madeira</div>
-              <div class="item-opts">Bem passado · Batata frita</div>
-            </div>
-          </div>
-          <div class="item-row">
-            <div class="item-qty">1x</div>
-            <div class="item-info">
-              <div class="item-nome">Água com gás 500ml</div>
-            </div>
-          </div>
-          <div class="pedido-entrega">🏠 Av. Paulista, 1200 · Bela Vista</div>
-        </div>
-        <div class="pedido-footer">
-          <button class="btn-avancar produzir" onclick="avancarStatus('244', 'saindo_entrega', this)">
-            🛵 Enviar para Entrega
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- COLUNA: SAINDO PARA ENTREGA -->
-  <div class="col">
-    <div class="col-header saindo">
-      <div class="col-title">
-        <div class="col-dot" style="background:var(--green)"></div>
-        Saindo para Entrega
-      </div>
-      <span class="col-count" style="color:var(--green)" id="cnt-saindo">0</span>
-    </div>
-    <div class="col-body" id="col-saindo">
-      <div class="empty-col">
-        <div class="icon">🛵</div>
-        <p>Nenhum pedido<br>saindo no momento</p>
-      </div>
-    </div>
-  </div>
-
-</div>
+<div class="modal" id="cancelModal"><div class="modal-card"><h3>Cancelar pedido</h3><p>Informe o motivo do cancelamento para registrar no historico da operacao.</p><textarea id="cancelReason" placeholder="Ex: item indisponivel, erro no preparo, atraso operacional..."></textarea><div class="modal-actions"><button class="btn" id="dismissCancel">Voltar</button><button class="btn btn-danger" id="confirmCancel">Confirmar cancelamento</button></div></div></div>
+<div class="toast" id="appToast"></div>
 
 <script>
-// ---- RELÓGIO ----
-function atualizarRelogio() {
-  const agora = new Date();
-  document.getElementById('clock').textContent =
-    agora.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}
-setInterval(atualizarRelogio, 1000);
-atualizarRelogio();
-
-// ---- TIMERS ----
-const timers = {
-  '247': Date.now() - 24 * 60000,
-  '251': Date.now() - 5 * 60000,
-  '244': Date.now() - 15 * 60000,
-};
-
-function atualizarTimers() {
-  Object.entries(timers).forEach(([id, start]) => {
-    const mins = Math.floor((Date.now() - start) / 60000);
-    const el = document.querySelector(`#pedido-${id} .pedido-timer`);
-    if (!el) return;
-    el.textContent = `⏱ ${mins} min`;
-    el.className = 'pedido-timer ' + (mins >= 30 ? 'timer-bad' : mins >= 15 ? 'timer-warn' : 'timer-ok');
-
-    // Progresso
-    const pct = Math.min(100, (mins / 45) * 100);
-    const bar = document.querySelector(`#pedido-${id} .progress-fill`);
-    if (bar) {
-      bar.style.width = pct + '%';
-      bar.style.background = pct >= 80 ? 'var(--red)' : pct >= 50 ? 'var(--amber)' : 'var(--green)';
-    }
-
-    // Urgente
-    const card = document.getElementById(`pedido-${id}`);
-    if (card) card.classList.toggle('urgente', mins >= 25);
-  });
-}
-setInterval(atualizarTimers, 30000);
-
-// ---- AVANÇAR STATUS ----
-function avancarStatus(id, novoStatus, btn) {
-  btn.disabled = true;
-  btn.textContent = '...';
-
-  // Simulação — em produção: fetch PATCH /cozinha/pedidos/{id}/avancar
-  setTimeout(() => {
-    const card = document.getElementById(`pedido-${id}`);
-    if (!card) return;
-
-    const origemId = novoStatus === 'em_producao' ? 'col-confirmado' : 'col-producao';
-    const destinoId = novoStatus === 'em_producao' ? 'col-producao' : 'col-saindo';
-
-    const destino = document.getElementById(destinoId);
-    // Remover empty state se existir
-    const empty = destino.querySelector('.empty-col');
-    if (empty) empty.remove();
-
-    // Mover card
-    destino.prepend(card);
-
-    // Atualizar botão
-    const footer = card.querySelector('.pedido-footer');
-    if (novoStatus === 'saindo_entrega') {
-      footer.innerHTML = `<button class="btn-avancar entregar" onclick="marcarEntregue('${id}', this)">✅ Confirmar Entrega</button>`;
-      // Notificar cliente (via WebSocket em produção)
-      showNotificacao('🛵 Pedido #' + id + ' saiu para entrega!', 'verde');
-    } else {
-      footer.innerHTML = `<button class="btn-avancar produzir" onclick="avancarStatus('${id}', 'saindo_entrega', this)">🛵 Enviar para Entrega</button>`;
-      showNotificacao('🍳 Pedido #' + id + ' em produção!', 'amber');
-    }
-
-    atualizarContadores();
-    tocarSom();
-  }, 600);
-}
-
-function marcarEntregue(id, btn) {
-  btn.disabled = true;
-  setTimeout(() => {
-    const card = document.getElementById(`pedido-${id}`);
-    if (card) {
-      card.style.opacity = '0';
-      card.style.transform = 'scale(0.95)';
-      card.style.transition = '.3s';
-      setTimeout(() => card.remove(), 300);
-    }
-    showNotificacao('✅ Pedido #' + id + ' entregue! +1', 'verde');
-    const el = document.getElementById('contEntregues');
-    el.textContent = parseInt(el.textContent) + 1;
-    atualizarContadores();
-  }, 400);
-}
-
-function cancelarPedido(id) {
-  if (!confirm('Cancelar este pedido?')) return;
-  const card = document.getElementById(`pedido-${id}`);
-  if (card) { card.style.opacity='0';card.style.transition='.2s';setTimeout(()=>card.remove(),200); }
-  atualizarContadores();
-}
-
-function atualizarContadores() {
-  ['confirmado','producao','saindo'].forEach(key => {
-    const colId = key === 'confirmado' ? 'col-confirmado' : key === 'producao' ? 'col-producao' : 'col-saindo';
-    const cnt = document.getElementById('col-' + key) || document.getElementById(colId);
-    const qtd = cnt ? cnt.querySelectorAll('.pedido-card').length : 0;
-    const el = document.getElementById('cnt-' + key);
-    if (el) el.textContent = qtd;
-  });
-}
-
-// ---- NOTIFICAÇÕES ----
-function showNotificacao(msg, tipo) {
-  const toast = document.createElement('div');
-  toast.className = 'toast ' + (tipo === 'amber' ? 'novo' : '');
-  toast.innerHTML = `<span class="toast-icon">${tipo === 'verde' ? '✅' : '🔔'}</span><span>${msg}</span>`;
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.opacity='0';toast.style.transition='.2s';setTimeout(()=>toast.remove(),200); }, 3500);
-}
-
-// ---- SOM DE NOTIFICAÇÃO (AudioContext) ----
-function tocarSom() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.setValueAtTime(1108, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.4);
-  } catch(e) {}
-}
-
-// ---- WebSocket (Laravel Echo) — ativar em produção ----
-/*
-window.Echo.channel('cozinha')
-  .listen('.novo.pedido', (data) => {
-    showNotificacao(`🔔 Novo pedido #${data.codigo} de ${data.cliente}!`, 'amber');
-    tocarSom();
-    // Injetar card na coluna confirmado via AJAX
-    fetch('/cozinha/pedidos').then(r => r.json()).then(renderPedidos);
-  })
-  .listen('.pedido.status', (data) => {
-    // Atualizar card existente
-  });
-*/
-
-// Simular novo pedido a cada 30s para demonstração
-let demoCount = 0;
-setTimeout(() => {
-  showNotificacao('🔔 Novo pedido de Maria Silva chegou!', 'amber');
-  tocarSom();
-}, 5000);
+const initialPedidos = @json($initialPedidos);
+const apiUrl = '{{ route('cozinha.api.pedidos') }}';
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const toast = document.getElementById('appToast');
+const cancelModal = document.getElementById('cancelModal');
+const cancelReason = document.getElementById('cancelReason');
+let pedidosState = [...initialPedidos.confirmado, ...initialPedidos.em_producao, ...initialPedidos.saindo_entrega];
+let pendingCancelUrl = null;
+function updateClock(){document.getElementById('liveClock').textContent=new Date().toLocaleTimeString('pt-BR')}
+setInterval(updateClock,1000);updateClock();
+function showToast(message,color='var(--green)'){toast.innerHTML=`<i class="fas fa-circle-check" style="color:${color}"></i><span>${message}</span>`;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2500)}
+function escapeHtml(value){return String(value||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function timerClass(level){return level==='critico'?'critico':level==='atencao'?'atencao':'ok'}
+function statusProgressColor(status){return status==='confirmado'?'#1d4ed8':status==='em_producao'?'#d97706':'#059669'}
+function statusCardClass(status){return status==='confirmado'?'status-confirmado':status==='em_producao'?'status-em_producao':'status-saindo_entrega'}
+function renderPedido(p){return `<article class="card ${statusCardClass(p.status)} ${p.faixa_tempo==='critico'?'critico':''}" data-id="${p.id}"><div class="progress"><span style="width:${p.progresso}%;background:${statusProgressColor(p.status)}"></span></div><div class="card-main"><div class="card-top"><div><div class="code">#${escapeHtml(p.codigo)}</div><div class="client">${escapeHtml(p.cliente||'Cliente')} · ${p.tipo_entrega==='entrega'?'Entrega':'Retirada'}</div></div><div class="timer ${timerClass(p.faixa_tempo)}">${Math.round(Number(p.minutos_decorridos||0))} min</div></div><div class="items">${p.itens.map(item=>`<div class="item"><img src="${escapeHtml(item.imagem||'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop')}" alt="${escapeHtml(item.nome||'Prato')}" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';"><div><div class="item-name">${item.quantidade}x ${escapeHtml(item.nome)}</div>${item.descricao?`<div class="item-desc">${escapeHtml(item.descricao)}</div>`:''}<div class="tags">${(item.ingredientes||[]).slice(0,4).map(i=>`<span class="tag">${escapeHtml(i)}</span>`).join('')}${(item.opcoes||[]).slice(0,2).map(op=>`<span class="tag">${escapeHtml(op.nome||'Opcao')}: ${escapeHtml(op.valor||'')}</span>`).join('')}</div>${item.observacao?`<div class="item-meta">Observacao: ${escapeHtml(item.observacao)}</div>`:''}</div></div>`).join('')}</div>${p.endereco?.texto?`<div class="note address">${escapeHtml(p.endereco.texto)}</div>`:`<div class="note address">Retirada no balcao</div>`}${p.observacoes?`<div class="note obs">${escapeHtml(p.observacoes)}</div>`:''}<div class="actions">${p.status!=='saindo_entrega'?`<button class="btn btn-primary" data-action="advance" data-url="${escapeHtml(p.avancar_url)}">${p.status==='confirmado'?'Iniciar producao':'Enviar para entrega'}</button><button class="btn btn-danger" data-action="cancel" data-url="${escapeHtml(p.cancelar_url)}">Cancelar</button>`:`<button class="btn btn-primary" data-action="advance" data-url="${escapeHtml(p.avancar_url)}">Marcar entregue</button>`}</div></div></article>`;}
+function renderBoard(){['confirmado','em_producao','saindo_entrega'].forEach(status=>{const col=document.getElementById(`col-${status}`);const items=pedidosState.filter(p=>p.status===status);document.getElementById(`count-${status}`).textContent=items.length;col.innerHTML=items.length?items.map(renderPedido).join(''):'<div class="empty">Nenhum pedido nesta etapa agora.</div>';});document.getElementById('stat-confirmado').textContent=pedidosState.filter(p=>p.status==='confirmado').length;document.getElementById('stat-producao').textContent=pedidosState.filter(p=>p.status==='em_producao').length;document.getElementById('stat-saindo').textContent=pedidosState.filter(p=>p.status==='saindo_entrega').length;document.getElementById('stat-total').textContent=pedidosState.length;}
+async function fetchPedidos(){try{const response=await fetch(apiUrl,{headers:{'Accept':'application/json'}});const data=await response.json();pedidosState=data;renderBoard();}catch(e){}}
+async function sendPatch(url,body={}){const response=await fetch(url,{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrfToken,'Accept':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok) throw new Error(data.error||data.message||'Nao foi possivel concluir a acao.');return data;}
+document.addEventListener('click',async event=>{const advanceButton=event.target.closest('[data-action="advance"]');const cancelButton=event.target.closest('[data-action="cancel"]');if(advanceButton){const original=advanceButton.textContent;advanceButton.disabled=true;advanceButton.textContent='Atualizando...';try{const data=await sendPatch(advanceButton.dataset.url);showToast(`Pedido ${data.pedido.codigo} atualizado para ${data.pedido.status_label}.`,'var(--navy)');await fetchPedidos();}catch(error){showToast(error.message,'var(--red)');advanceButton.disabled=false;advanceButton.textContent=original;}}if(cancelButton){pendingCancelUrl=cancelButton.dataset.url;cancelReason.value='';cancelModal.classList.add('open');cancelReason.focus();}});
+document.getElementById('dismissCancel').addEventListener('click',()=>{cancelModal.classList.remove('open');pendingCancelUrl=null;});
+document.getElementById('confirmCancel').addEventListener('click',async()=>{if(!pendingCancelUrl) return;try{await sendPatch(pendingCancelUrl,{motivo:cancelReason.value});cancelModal.classList.remove('open');showToast('Pedido cancelado com sucesso.','var(--red)');await fetchPedidos();}catch(error){showToast(error.message,'var(--red)')}});
+cancelModal.addEventListener('click',event=>{if(event.target===cancelModal) cancelModal.classList.remove('open');});
+renderBoard();
+setInterval(fetchPedidos,10000);
 </script>
-</body>
-</html>
+
+@include('cozinha.partials.layout-end')
