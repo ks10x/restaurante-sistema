@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'pagarme' => [
+        'public_key' => env('PAGARME_PUBLIC_KEY'),
+        'secret_key' => env('PAGARME_SECRET_KEY'),
+    ],
+
 ];
