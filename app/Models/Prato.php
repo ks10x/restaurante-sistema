@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
  
 class Prato extends Model
 {
@@ -37,9 +38,19 @@ class Prato extends Model
     }
  
     public function getImagemUrlAttribute(): string {
-        return $this->imagem
-            ? asset('storage/' . $this->imagem)
-            : asset('images/prato-placeholder.jpg');
+        if (blank($this->imagem)) {
+            return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
+        }
+
+        if (str_starts_with($this->imagem, 'http://') || str_starts_with($this->imagem, 'https://')) {
+            return $this->imagem;
+        }
+
+        if (Storage::disk('public')->exists($this->imagem)) {
+            return asset('storage/' . ltrim($this->imagem, '/'));
+        }
+
+        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop';
     }
  
     public function getAlergenicosAttribute(): array {
