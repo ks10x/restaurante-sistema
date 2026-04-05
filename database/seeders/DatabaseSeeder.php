@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ClienteSeeder::class,
 
             ConfiguracaoSeeder::class,
+            RestaurantConfigSeeder::class,
             HorarioFuncionamentoSeeder::class,
             CategoriaDemoSeeder::class,
 

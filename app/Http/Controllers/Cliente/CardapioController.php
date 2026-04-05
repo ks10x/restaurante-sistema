@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Cliente;
  
 use App\Http\Controllers\Controller;
-use App\Models\{Categoria, Prato, Configuracao};
+use App\Models\{Categoria, Prato, Configuracao, RestaurantConfig};
 use Illuminate\Http\Request;
  
 class CardapioController extends Controller
@@ -33,7 +33,9 @@ class CardapioController extends Controller
             'tempo_estimado'=> 45,
         ];
 
-        return view('cliente.cardapio', compact('categorias', 'destaques', 'config'));
+        $restaurantConfig = RestaurantConfig::storefront();
+
+        return view('cliente.cardapio', compact('categorias', 'destaques', 'config', 'restaurantConfig'));
     }
     
     public function show(Prato $prato)

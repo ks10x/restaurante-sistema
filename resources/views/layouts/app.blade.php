@@ -7,46 +7,39 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         @include('layouts.partials.assets')
         <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
+        @include('layouts.partials.restaurant-theme')
 
         <style>
-        /* Fundo escuro para combinar com o cardápio */
             body, .min-h-screen {
-                background-color: #1A1512 !important;
-                color: #f3f4f6;
+                background-color: var(--bg-primary);
+                color: var(--text-main);
             }
-            
-            /* Ajuste nos cards brancos do Breeze */
+
             .bg-white {
-                background-color: #2A2420 !important;
-                border: 1px solid rgba(212, 163, 115, 0.1);
+                background-color: var(--surface-main) !important;
+                border: 1px solid var(--border-soft);
             }
-            
-            /* Textos e Labels */
+
             label, p, h2 {
-                color: #D4A373 !important;
+                color: var(--color-secondary) !important;
             }
-            
-            /* Inputs escuros */
+
             input {
-                background-color: #1A1512 !important;
-                border-color: #333 !important;
-                color: white !important;
+                background-color: var(--surface-main) !important;
+                border-color: var(--border-soft) !important;
+                color: var(--text-main) !important;
             }
         </style>
-
-        <!-- Scripts -->
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 
-            <!-- Page Heading -->
             @isset($header)
                 <header class="bg-white shadow">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -55,7 +48,6 @@
                 </header>
             @endisset
 
-            <!-- Page Content -->
             <main>
                 {{ $slot }}
             </main>
