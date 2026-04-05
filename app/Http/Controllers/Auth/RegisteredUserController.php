@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Endereco;
+use App\Models\RestaurantConfig;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +23,9 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register_wizard');
+        $restaurantConfig = RestaurantConfig::storefront();
+
+        return view('auth.register_wizard', compact('restaurantConfig'));
     }
 
     /**

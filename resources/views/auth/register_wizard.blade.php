@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cadastro — BellaCucina</title>
+    <title>Cadastro — {{ config('app.name', 'Restaurante') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="{{ asset('js/a11y-prefs.js') }}" defer></script>
+    @include('layouts.partials.restaurant-theme')
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #F8FAFC; }
-        .navy-text { color: #1E3A8A; }
-        .navy-bg { background-color: #1E3A8A; }
-        .navy-border:focus { border-color: #1E3A8A; }
+        body { background-color: var(--surface-soft); font-family: 'DM Sans', sans-serif; }
+        .brand-text  { color: var(--color-secondary); }
+        .brand-bg    { background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%); }
+        .brand-bg-hover:hover { filter: brightness(0.9); }
+        .brand-border:focus { border-color: var(--color-secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-secondary) 15%, transparent); }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen py-10 px-6">
-    <div class="w-full max-w-2xl bg-white rounded-[32px] p-8 border border-slate-200 shadow-xl relative mt-10">
-        <a href="{{ route('cardapio.index') }}" class="absolute top-8 left-8 inline-flex items-center text-slate-400 hover:text-blue-900 transition-all group">
+    <div class="w-full max-w-2xl bg-white rounded-[32px] p-8 border shadow-xl relative mt-10" style="border-color: var(--color-secondary-border);">
+        <a href="{{ route('cardapio.index') }}" class="absolute top-8 left-8 inline-flex items-center text-slate-400 hover:text-slate-700 transition-all group">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -23,10 +26,14 @@
         </a>
 
         <div class="text-center mb-6 mt-4">
-            <h1 class="text-3xl font-serif navy-text mb-2 font-bold">BellaCucina</h1>
+            @if($restaurantConfig->logo_url)
+                <img src="{{ $restaurantConfig->logo_url }}" alt="Logo do restaurante" class="mx-auto mb-4 max-h-16 max-w-[180px] object-contain">
+            @endif
+            <h1 class="text-3xl font-bold brand-text mb-2" style="font-family: 'Playfair Display', serif;">{{ config('app.name', 'Restaurante') }}</h1>
             <p class="text-slate-500 text-sm">Crie sua conta em 3 etapas.</p>
         </div>
 
+        {{-- Steps --}}
         <div class="flex items-center justify-between gap-3 mb-6">
             <div class="flex-1 flex items-center gap-3">
                 <div id="stepDot1" class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border border-slate-200 bg-white text-slate-600">1</div>
@@ -76,26 +83,27 @@
         <form id="registerWizard" method="POST" action="{{ route('register') }}" class="space-y-6" novalidate>
             @csrf
 
+            {{-- Etapa 1: Dados pessoais --}}
             <div id="step1" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Nome*</label>
-                        <input id="name" type="text" name="name" value="{{ old('name') }}" required class="w-full bg-slate-50 border @error('name') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="name" type="text" name="name" value="{{ old('name') }}" required class="brand-border w-full bg-slate-50 border @error('name') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Sobrenome*</label>
-                        <input id="last_name" type="text" name="last_name" value="{{ old('last_name') }}" required class="w-full bg-slate-50 border @error('last_name') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="last_name" type="text" name="last_name" value="{{ old('last_name') }}" required class="brand-border w-full bg-slate-50 border @error('last_name') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Telefone*</label>
-                        <input id="phone" type="text" name="phone" value="{{ old('phone') }}" required placeholder="(11) 90000-0000" class="w-full bg-slate-50 border @error('phone') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="phone" type="text" name="phone" value="{{ old('phone') }}" required placeholder="(11) 90000-0000" class="brand-border w-full bg-slate-50 border @error('phone') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">CPF*</label>
-                        <input id="cpf" type="text" name="cpf" value="{{ old('cpf') }}" required placeholder="000.000.000-00" class="w-full bg-slate-50 border @error('cpf') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="cpf" type="text" name="cpf" value="{{ old('cpf') }}" required placeholder="000.000.000-00" class="brand-border w-full bg-slate-50 border @error('cpf') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                         <p class="mt-1 text-[11px] text-slate-400">O CPF será validado automaticamente.</p>
                     </div>
                 </div>
@@ -104,7 +112,7 @@
                     <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Data de nascimento*</label>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <select id="birth_day" name="birth_day" required class="w-full bg-slate-50 border @error('birth_day') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                            <select id="birth_day" name="birth_day" required class="brand-border w-full bg-slate-50 border @error('birth_day') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                                 <option value="">Dia</option>
                                 @for($d=1;$d<=31;$d++)
                                     <option value="{{ $d }}" @selected((string)old('birth_day') === (string)$d)>{{ $d }}</option>
@@ -113,7 +121,7 @@
                         </div>
                         <div>
                             @php($meses = [1=>'Janeiro',2=>'Fevereiro',3=>'Março',4=>'Abril',5=>'Maio',6=>'Junho',7=>'Julho',8=>'Agosto',9=>'Setembro',10=>'Outubro',11=>'Novembro',12=>'Dezembro'])
-                            <select id="birth_month" name="birth_month" required class="w-full bg-slate-50 border @error('birth_month') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                            <select id="birth_month" name="birth_month" required class="brand-border w-full bg-slate-50 border @error('birth_month') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                                 <option value="">Mês</option>
                                 @foreach($meses as $num=>$label)
                                     <option value="{{ $num }}" @selected((string)old('birth_month') === (string)$num)>{{ $label }}</option>
@@ -122,7 +130,7 @@
                         </div>
                         <div>
                             @php($anoAtual = (int) now()->year)
-                            <select id="birth_year" name="birth_year" required class="w-full bg-slate-50 border @error('birth_year') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                            <select id="birth_year" name="birth_year" required class="brand-border w-full bg-slate-50 border @error('birth_year') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                                 <option value="">Ano</option>
                                 @for($y=$anoAtual;$y>=1900;$y--)
                                     <option value="{{ $y }}" @selected((string)old('birth_year') === (string)$y)>{{ $y }}</option>
@@ -134,57 +142,59 @@
 
                 <div>
                     <label class="block text-slate-500 text-xs font-bold uppercase mb-2">E-mail*</label>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" required class="w-full bg-slate-50 border @error('email') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required class="brand-border w-full bg-slate-50 border @error('email') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                 </div>
             </div>
 
+            {{-- Etapa 2: Endereço --}}
             <div id="step2" class="space-y-4 hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">CEP*</label>
-                        <input id="cep" type="text" name="cep" value="{{ old('cep') }}" required placeholder="00000-000" class="w-full bg-slate-50 border @error('cep') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="cep" type="text" name="cep" value="{{ old('cep') }}" required placeholder="00000-000" class="brand-border w-full bg-slate-50 border @error('cep') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                         <div id="cepHint" class="mt-1 text-[11px] text-slate-400"></div>
                     </div>
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Número*</label>
-                        <input id="numero" type="text" name="numero" value="{{ old('numero') }}" required class="w-full bg-slate-50 border @error('numero') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="numero" type="text" name="numero" value="{{ old('numero') }}" required class="brand-border w-full bg-slate-50 border @error('numero') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Rua (Logradouro)*</label>
-                    <input id="logradouro" type="text" name="logradouro" value="{{ old('logradouro') }}" required class="w-full bg-slate-50 border @error('logradouro') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                    <input id="logradouro" type="text" name="logradouro" value="{{ old('logradouro') }}" required class="brand-border w-full bg-slate-50 border @error('logradouro') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Bairro*</label>
-                        <input id="bairro" type="text" name="bairro" value="{{ old('bairro') }}" required class="w-full bg-slate-50 border @error('bairro') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="bairro" type="text" name="bairro" value="{{ old('bairro') }}" required class="brand-border w-full bg-slate-50 border @error('bairro') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Cidade*</label>
-                        <input id="cidade" type="text" name="cidade" value="{{ old('cidade') }}" required class="w-full bg-slate-50 border @error('cidade') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="cidade" type="text" name="cidade" value="{{ old('cidade') }}" required class="brand-border w-full bg-slate-50 border @error('cidade') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">UF*</label>
-                        <input id="estado" type="text" name="estado" value="{{ old('estado') }}" required maxlength="2" placeholder="SP" class="uppercase w-full bg-slate-50 border @error('estado') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="estado" type="text" name="estado" value="{{ old('estado') }}" required maxlength="2" placeholder="SP" class="brand-border uppercase w-full bg-slate-50 border @error('estado') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Complemento</label>
-                        <input id="complemento" type="text" name="complemento" value="{{ old('complemento') }}" class="w-full bg-slate-50 border @error('complemento') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 navy-border outline-none transition-all">
+                        <input id="complemento" type="text" name="complemento" value="{{ old('complemento') }}" class="brand-border w-full bg-slate-50 border @error('complemento') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 text-slate-900 outline-none transition-all">
                     </div>
                 </div>
             </div>
 
+            {{-- Etapa 3: Segurança --}}
             <div id="step3" class="space-y-4 hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Senha*</label>
                         <div class="relative">
-                            <input id="password" type="password" name="password" required class="w-full bg-slate-50 border @error('password') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 pr-12 text-slate-900 navy-border outline-none transition-all">
+                            <input id="password" type="password" name="password" required class="brand-border w-full bg-slate-50 border @error('password') border-red-500 @else border-slate-200 @enderror rounded-2xl p-4 pr-12 text-slate-900 outline-none transition-all">
                             <button type="button" data-toggle-password="password" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -202,7 +212,7 @@
                     <div>
                         <label class="block text-slate-500 text-xs font-bold uppercase mb-2">Confirmar senha*</label>
                         <div class="relative">
-                            <input id="password_confirmation" type="password" name="password_confirmation" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 pr-12 text-slate-900 navy-border outline-none transition-all">
+                            <input id="password_confirmation" type="password" name="password_confirmation" required class="brand-border w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 pr-12 text-slate-900 outline-none transition-all">
                             <button type="button" data-toggle-password="password_confirmation" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -219,17 +229,13 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-between gap-3 pt-2">
-                <button id="btnBack" type="button" class="px-5 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-2xl shadow-sm hover:bg-slate-50 transition-all">
-                    Voltar
-                </button>
-
+            <div class="flex items-center justify-end gap-3 pt-2">
                 <div class="flex items-center gap-3">
                     <a href="{{ route('login') }}" class="text-sm text-slate-500 hover:text-slate-700">Já tem conta?</a>
-                    <button id="btnNext" type="button" class="px-6 py-3 navy-bg text-white font-bold rounded-2xl hover:bg-blue-800 transition-all shadow-lg">
+                    <button id="btnNext" type="button" class="brand-bg brand-bg-hover px-6 py-3 text-white font-bold rounded-2xl transition-all shadow-lg">
                         Avançar
                     </button>
-                    <button id="btnSubmit" type="submit" class="hidden px-6 py-3 navy-bg text-white font-bold rounded-2xl hover:bg-blue-800 transition-all shadow-lg">
+                    <button id="btnSubmit" type="submit" class="brand-bg brand-bg-hover hidden px-6 py-3 text-white font-bold rounded-2xl transition-all shadow-lg">
                         Finalizar cadastro
                     </button>
                 </div>
@@ -240,6 +246,7 @@
     <script>
         const errorFields = @json($errors->keys());
 
+        // Toggle password visibility
         document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const id = btn.getAttribute('data-toggle-password');
@@ -261,14 +268,17 @@
             3: document.getElementById('stepDot3'),
         };
 
-        const btnBack = document.getElementById('btnBack');
-        const btnNext = document.getElementById('btnNext');
+        const btnNext   = document.getElementById('btnNext');
         const btnSubmit = document.getElementById('btnSubmit');
 
         const fieldsStep2 = ['cep','logradouro','bairro','cidade','estado','numero'];
         const fieldsStep3 = ['password','password_confirmation'];
 
         let currentStep = 1;
+
+        // Lê a cor primária do white label para aplicar nos dots via JS
+        const brandColor = getComputedStyle(document.documentElement)
+            .getPropertyValue('--color-secondary').trim() || '#1E3A8A';
 
         function initialStepFromErrors() {
             if (!errorFields || errorFields.length === 0) return 1;
@@ -284,24 +294,23 @@
 
             Object.entries(stepDots).forEach(([k, dot]) => {
                 const s = Number(k);
-                dot.classList.remove('navy-bg', 'text-white', 'border-blue-900');
+                // Reset
+                dot.style.background = '';
+                dot.style.color = '';
+                dot.style.borderColor = '';
+                dot.classList.remove('text-white');
                 dot.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
-                if (s === step) {
-                    dot.classList.add('navy-bg', 'text-white', 'border-blue-900');
-                    dot.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-                }
-                if (s < step) {
-                    dot.classList.add('navy-bg', 'text-white', 'border-blue-900');
-                    dot.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-                    dot.textContent = '✓';
-                } else {
-                    dot.textContent = String(s);
-                }
-            });
 
-            btnBack.disabled = step === 1;
-            btnBack.classList.toggle('opacity-50', step === 1);
-            btnBack.classList.toggle('cursor-not-allowed', step === 1);
+                if (s <= step) {
+                    // Ativo ou concluído — usa a cor do white label via style inline
+                    dot.style.background = brandColor;
+                    dot.style.color = '#ffffff';
+                    dot.style.borderColor = brandColor;
+                    dot.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                }
+
+                dot.textContent = s < step ? '✓' : String(s);
+            });
 
             btnNext.classList.toggle('hidden', step === 3);
             btnSubmit.classList.toggle('hidden', step !== 3);
@@ -329,10 +338,6 @@
             return true;
         }
 
-        btnBack.addEventListener('click', () => {
-            if (currentStep > 1) setStep(currentStep - 1);
-        });
-
         btnNext.addEventListener('click', () => {
             if (!validateStep(currentStep)) {
                 alert('Preencha corretamente os campos obrigatórios desta etapa.');
@@ -341,10 +346,11 @@
             setStep(currentStep + 1);
         });
 
+        // Máscaras
         function onlyDigits(v) { return (v || '').replace(/\D/g, ''); }
 
         function maskCpf(v) {
-            const d = onlyDigits(v).slice(0,11);
+            const d = onlyDigits(v).slice(0, 11);
             return d
                 .replace(/^(\d{3})(\d)/, '$1.$2')
                 .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
@@ -352,32 +358,29 @@
         }
 
         function maskCep(v) {
-            const d = onlyDigits(v).slice(0,8);
+            const d = onlyDigits(v).slice(0, 8);
             return d.replace(/^(\d{5})(\d)/, '$1-$2');
         }
 
         function maskPhone(v) {
-            const d = onlyDigits(v).slice(0,11);
+            const d = onlyDigits(v).slice(0, 11);
             if (d.length <= 10) {
-                return d
-                    .replace(/^(\d{2})(\d)/, '($1) $2')
-                    .replace(/(\d{4})(\d)/, '$1-$2');
+                return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
             }
-            return d
-                .replace(/^(\d{2})(\d)/, '($1) $2')
-                .replace(/(\d{5})(\d)/, '$1-$2');
+            return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
         }
 
-        const cpfEl = document.getElementById('cpf');
-        const cepEl = document.getElementById('cep');
-        const phoneEl = document.getElementById('phone');
+        const cpfEl    = document.getElementById('cpf');
+        const cepEl    = document.getElementById('cep');
+        const phoneEl  = document.getElementById('phone');
         const estadoEl = document.getElementById('estado');
 
         cpfEl?.addEventListener('input', (e) => { e.target.value = maskCpf(e.target.value); });
         cepEl?.addEventListener('input', (e) => { e.target.value = maskCep(e.target.value); });
         phoneEl?.addEventListener('input', (e) => { e.target.value = maskPhone(e.target.value); });
-        estadoEl?.addEventListener('input', (e) => { e.target.value = (e.target.value || '').toUpperCase().replace(/[^A-Z]/g,'').slice(0,2); });
+        estadoEl?.addEventListener('input', (e) => { e.target.value = (e.target.value || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2); });
 
+        // ViaCEP
         const cepHint = document.getElementById('cepHint');
         let lastCepLookup = null;
 
@@ -385,24 +388,16 @@
             const cepDigits = onlyDigits(getValue('cep'));
             if (cepDigits.length !== 8) return;
             if (cepDigits === lastCepLookup) return;
-
             lastCepLookup = cepDigits;
             cepHint.textContent = 'Buscando CEP...';
-
             try {
                 const resp = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
                 const data = await resp.json();
-
-                if (data.erro) {
-                    cepHint.textContent = 'CEP não encontrado. Você pode preencher manualmente.';
-                    return;
-                }
-
+                if (data.erro) { cepHint.textContent = 'CEP não encontrado. Você pode preencher manualmente.'; return; }
                 document.getElementById('logradouro').value = data.logradouro || '';
-                document.getElementById('bairro').value = data.bairro || '';
-                document.getElementById('cidade').value = data.localidade || '';
-                document.getElementById('estado').value = (data.uf || '').toUpperCase();
-
+                document.getElementById('bairro').value     = data.bairro || '';
+                document.getElementById('cidade').value     = data.localidade || '';
+                document.getElementById('estado').value     = (data.uf || '').toUpperCase();
                 cepHint.textContent = 'Endereço preenchido automaticamente. Você pode editar se quiser.';
             } catch (e) {
                 cepHint.textContent = 'Erro ao consultar ViaCEP. Preencha manualmente.';
@@ -410,15 +405,13 @@
         }
 
         cepEl?.addEventListener('blur', lookupCep);
-        cepEl?.addEventListener('keyup', () => {
-            const cepDigits = onlyDigits(getValue('cep'));
-            if (cepDigits.length === 8) lookupCep();
-        });
+        cepEl?.addEventListener('keyup', () => { if (onlyDigits(getValue('cep')).length === 8) lookupCep(); });
 
-        const pwdEl = document.getElementById('password');
-        const pwdConfEl = document.getElementById('password_confirmation');
-        const pwdBar = document.getElementById('pwdBar');
-        const pwdHint = document.getElementById('pwdHint');
+        // Força da senha
+        const pwdEl      = document.getElementById('password');
+        const pwdConfEl  = document.getElementById('password_confirmation');
+        const pwdBar     = document.getElementById('pwdBar');
+        const pwdHint    = document.getElementById('pwdHint');
         const pwdMatchHint = document.getElementById('pwdMatchHint');
 
         function scorePassword(pwd) {
@@ -432,7 +425,7 @@
         }
 
         function updatePasswordUi() {
-            const pwd = getValue('password');
+            const pwd  = getValue('password');
             const conf = getValue('password_confirmation');
             const score = scorePassword(pwd);
             const pct = Math.min(100, Math.round((score / 5) * 100));
@@ -443,7 +436,7 @@
             pwdHint.textContent =
                 score >= 4 ? 'Senha forte.' :
                 score >= 3 ? 'Senha média. Adicione mais complexidade.' :
-                'Senha fraca. Use 8+ caracteres com letras, números e símbolos.';
+                             'Senha fraca. Use 8+ caracteres com letras, números e símbolos.';
 
             if (!conf) {
                 pwdMatchHint.textContent = '';
