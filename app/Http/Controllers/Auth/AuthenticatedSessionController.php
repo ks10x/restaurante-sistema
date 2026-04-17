@@ -74,6 +74,11 @@ class AuthenticatedSessionController extends Controller
 
         $user->update(['last_login_at' => now()]);
 
+        // Se o usuário tem 2FA ativo, redirecionar para verificação
+        if ($user->two_factor_secret && $user->two_factor_confirmed_at) {
+            return redirect()->route('2fa.index');
+        }
+
         return redirect()->intended(match((int)$user->role) {
             User::ROLE_ADMIN => route('admin.dashboard'),
             User::ROLE_COZINHA => route('cozinha.fila'),
