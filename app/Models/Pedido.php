@@ -11,7 +11,7 @@ class Pedido extends Model
     use HasFactory;
  
     protected $fillable = [
-        'codigo','user_id','endereco_id','tipo_entrega','status',
+        'codigo','user_id','mesa_id','nome_cliente_avulso','endereco_id','tipo_entrega','tipo_consumo','status',
         'subtotal','taxa_entrega','desconto','total',
         'pagamento_metodo','pagamento_status','pagamento_ref','troco_para',
         'observacoes','tempo_estimado',
@@ -50,6 +50,7 @@ class Pedido extends Model
  
     public function usuario()    { return $this->belongsTo(User::class, 'user_id'); }
     public function endereco()   { return $this->belongsTo(Endereco::class); }
+    public function mesa()       { return $this->belongsTo(Mesa::class); }
     public function itens()      { return $this->hasMany(PedidoItem::class); }
     public function historico()  { return $this->hasMany(PedidoStatusHistorico::class)->orderBy('created_at'); }
  

@@ -83,6 +83,7 @@ class AuthenticatedSessionController extends Controller
             User::ROLE_ADMIN => route('admin.dashboard'),
             User::ROLE_COZINHA => route('cozinha.fila'),
             User::ROLE_ENTREGADOR => route('entregador.index'),
+            User::ROLE_GARCOM => route('garcom.index'),
             default => route('cardapio.index'),
         });
     }

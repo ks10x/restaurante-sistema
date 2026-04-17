@@ -109,6 +109,15 @@ Route::middleware(['auth'])->prefix('2fa')->name('2fa.')->group(function () {
 
 
 // ═════════════════════════════════════════════════════════════
+// QR CODE DA MESA (Acesso Público com Sessão)
+// ═════════════════════════════════════════════════════════════
+Route::get('/m/{hash}', [\App\Http\Controllers\Mesa\ComandaController::class, 'abrirMesa'])->name('mesa.abrir');
+Route::get('/comanda', [\App\Http\Controllers\Mesa\ComandaController::class, 'verComanda'])->name('mesa.comanda');
+Route::post('/comanda/chamar-garcom', [\App\Http\Controllers\Mesa\ComandaController::class, 'chamarGarcom'])->name('mesa.fechar');
+Route::post('/comanda/pedir', [\App\Http\Controllers\Mesa\ComandaController::class, 'enviarPedido'])->name('mesa.pedir');
+
+
+// ═════════════════════════════════════════════════════════════
 // CARDÁPIO PÚBLICO (sem login)
 // ═════════════════════════════════════════════════════════════
 Route::prefix('cardapio')->name('cardapio.')->group(function () {
@@ -185,6 +194,19 @@ Route::middleware(['auth', 'role:0,3', '2fa.required'])
 
 
 // ═════════════════════════════════════════════════════════════
+// GARÇOM (role=4)
+// ═════════════════════════════════════════════════════════════
+Route::middleware(['auth', 'role:0,4', '2fa.required'])
+    ->prefix('garcom')
+    ->name('garcom.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\Garcom\PainelController::class, 'index'])->name('index');
+        Route::get('/mesa/{mesa}', [\App\Http\Controllers\Garcom\PainelController::class, 'show'])->name('mesa.show');
+        Route::post('/mesa/{mesa}/fechar', [\App\Http\Controllers\Garcom\PainelController::class, 'fecharConta'])->name('mesa.fechar');
+    });
+
+
+// ═════════════════════════════════════════════════════════════
 // ADMIN (role=0)
 // ═════════════════════════════════════════════════════════════
 Route::middleware(['auth', 'role:0', 'verified.contacts', '2fa.required'])
@@ -231,6 +253,14 @@ Route::middleware(['auth', 'role:0', 'verified.contacts', '2fa.required'])
         Route::prefix('clientes')->name('clientes.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\ClienteController::class, 'index'])->name('index');
             Route::patch('/{user}/toggle-block', [\App\Http\Controllers\Admin\ClienteController::class, 'toggleBlock'])->name('toggleBlock');
+        });
+
+        // Mesas
+        Route::prefix('mesas')->name('mesas.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\MesaController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\MesaController::class, 'store'])->name('store');
+            Route::delete('/{mesa}', [\App\Http\Controllers\Admin\MesaController::class, 'destroy'])->name('destroy');
+            Route::get('/{mesa}/qr', [\App\Http\Controllers\Admin\MesaController::class, 'showQr'])->name('qr');
         });
 
         // Configurações

@@ -597,7 +597,82 @@
 
         // Checkout
         document.getElementById('btnCheckoutCart')?.addEventListener('click', () => {
-            if (cart.length > 0) window.location.href = '/checkout';
+            if (cart.length === 0) return;
+
+            const isMesa = {{ session()->has('mesa_ativa_id') ? 'true' : 'false' }};
+            if (isMesa) {
+                // Montar resumo do pedido
+                let resumoHtml = cart.map(i => `<div class="flex justify-between text-sm mb-2 text-slate-600"><span class="flex-1 pr-2 truncate">${i.qtd}x ${i.nome}</span><span class="font-bold shrink-0">R$ ${(i.preco * i.qtd).toFixed(2).replace('.', ',')}</span></div>`).join('');
+                let total = cart.reduce((acc, i) => acc + (i.preco * i.qtd), 0).toFixed(2).replace('.', ',');
+
+                const modalHtml = `
+                <div id="confirmOrderModal" class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4">
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('confirmOrderModal').remove()"></div>
+                    <div class="relative bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all translate-y-0">
+                        <div class="bg-indigo-600 p-6 text-center text-white">
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <h3 class="text-2xl font-black">Confirmar Pedido?</h3>
+                            <p class="text-indigo-200 text-sm mt-1">Este pedido será cobrado na sua conta final.</p>
+                        </div>
+                        <div class="p-6">
+                            <h4 class="font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Resumo</h4>
+                            <div class="max-h-40 overflow-y-auto mb-4 pr-1">
+                                ${resumoHtml}
+                            </div>
+                            <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                                <span class="text-slate-500 font-bold uppercase text-xs tracking-wider">Total do Pedido</span>
+                                <span class="text-2xl font-black text-indigo-600">R$ ${total}</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="document.getElementById('confirmOrderModal').remove()" class="w-1/3 py-4 rounded-2xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors">Voltar</button>
+                                <button id="btnConfirmSend" class="w-2/3 py-4 rounded-2xl font-black text-white bg-green-500 hover:bg-green-600 shadow-xl shadow-green-500/20 active:scale-95 transition-all outline-none">
+                                    Enviar p/ Cozinha
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+                document.getElementById('btnConfirmSend').addEventListener('click', function() {
+                    const btnCnf = this;
+                    btnCnf.innerHTML = '<span class="animate-pulse">Enviando...</span>';
+                    btnCnf.disabled = true;
+
+                    fetch('{{ route("mesa.pedir") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            itens: cart.map(i => ({ prato_id: i.id, qtd: i.qtd, observacao: i.observacao }))
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            localStorage.removeItem('bellacucina_cart');
+                            window.location.href = data.redirect;
+                        } else {
+                            alert(data.message || 'Erro ao enviar pedido.');
+                            btnCnf.innerText = 'Enviar p/ Cozinha';
+                            btnCnf.disabled = false;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Erro inesperado.');
+                        btnCnf.innerText = 'Enviar p/ Cozinha';
+                        btnCnf.disabled = false;
+                    });
+                });
+            } else {
+                window.location.href = '/checkout';
+            }
         });
 
         // --- FUNCTIONS ---

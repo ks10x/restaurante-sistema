@@ -19,6 +19,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public const ROLE_COZINHA = 1;
     public const ROLE_CLIENTE = 2;
     public const ROLE_ENTREGADOR = 3;
+    public const ROLE_GARCOM = 4;
 
     protected $fillable = [
         'name',
@@ -58,12 +59,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isCozinha(): bool    { return (int)$this->role === self::ROLE_COZINHA; }
     public function isCliente(): bool    { return (int)$this->role === self::ROLE_CLIENTE; }
     public function isEntregador(): bool { return (int)$this->role === self::ROLE_ENTREGADOR; }
+    public function isGarcom(): bool     { return (int)$this->role === self::ROLE_GARCOM; }
 
     public function getRoleNameAttribute(): string {
         return match((int)$this->role) {
             self::ROLE_ADMIN => 'admin',
             self::ROLE_COZINHA => 'cozinha',
             self::ROLE_ENTREGADOR => 'entregador',
+            self::ROLE_GARCOM => 'garçom',
             default => 'cliente',
         };
     }
