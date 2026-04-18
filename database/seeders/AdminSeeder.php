@@ -50,6 +50,18 @@ class AdminSeeder extends Seeder
             ]
         );
 
+        // Garçom de Teste
+        User::updateOrCreate(
+            ['email' => 'garcom@restaurante.com'],
+            [
+                'name'      => 'Garçom Teste',
+                'password'  => Hash::make('Garcom@1234'),
+                'phone'     => '(11) 99999-0004',
+                'role'      => User::ROLE_GARCOM,
+                'status'    => 'ativo',
+            ]
+        );
+
         $this->command->info('Usuários criados/atualizados:');
         $this->command->table(
             ['Email', 'Role', 'Senha'],
@@ -57,6 +69,7 @@ class AdminSeeder extends Seeder
                 ['gabrielarruda1909@gmail.com', 'Admin (0)',    'Admin@1234'],
                 ['cozinha@restaurante.com', 'Cozinha (1)', 'Cozinha@1234'],
                 ['cliente@teste.com',       'Cliente (2)', 'Cliente@1234'],
+                ['garcom@restaurante.com',  'Garçom (4)',  'Garcom@1234'],
             ]
         );
     }

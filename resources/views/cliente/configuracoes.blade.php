@@ -171,16 +171,33 @@
     <div class="section">
         <div class="section-title">Segurança</div>
         <div class="section-card">
-            <a href="{{ route('2fa.index') }}" class="menu-item">
-                <div class="menu-icon green"><i class="fas fa-user-shield"></i></div>
-                <div class="menu-text">
-                    <div class="title">Autenticação em 2 etapas (2FA)</div>
-                    <div class="subtitle">
-                        {{ ($u->two_factor_confirmed_at ?? null) ? 'Ativo no momento' : 'Ative para proteger sua conta' }}
+            @if($u->two_factor_confirmed_at)
+                {{-- 2FA ATIVO — opção de desativar --}}
+                <div class="menu-item" role="button" tabindex="0" onclick="showModal('2fa-disable')" onkeypress="if(event.key==='Enter'||event.key===' ') showModal('2fa-disable')">
+                    <div class="menu-icon green"><i class="fas fa-shield-alt"></i></div>
+                    <div class="menu-text">
+                        <div class="title">Autenticação em 2 etapas (2FA)</div>
+                        <div class="subtitle" style="display:flex;align-items:center;gap:6px;">
+                            <span class="pill pill-ok" style="font-size:10px;"><i class="fas fa-check-circle"></i> Ativo</span>
+                            Protegido via Google Authenticator
+                        </div>
                     </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
                 </div>
-                <i class="fas fa-chevron-right menu-chevron"></i>
-            </a>
+            @else
+                {{-- 2FA INATIVO — opção de ativar --}}
+                <a href="{{ route('2fa.setup') }}" class="menu-item">
+                    <div class="menu-icon orange"><i class="fas fa-user-shield"></i></div>
+                    <div class="menu-text">
+                        <div class="title">Autenticação em 2 etapas (2FA)</div>
+                        <div class="subtitle" style="display:flex;align-items:center;gap:6px;">
+                            <span class="pill pill-warn" style="font-size:10px;"><i class="fas fa-exclamation-triangle"></i> Inativo</span>
+                            Ative para proteger sua conta
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right menu-chevron"></i>
+                </a>
+            @endif
 
             <div class="menu-item" role="button" tabindex="0" onclick="showModal('sessoes')" onkeypress="if(event.key==='Enter'||event.key===' ') showModal('sessoes')">
                 <div class="menu-icon slate"><i class="fas fa-laptop"></i></div>
@@ -540,6 +557,56 @@
     </div>
 </div>
 
+<!-- Modal: Desativar 2FA -->
+<div class="modal-overlay" id="modal-2fa-disable" role="dialog" aria-modal="true" aria-label="Desativar 2FA">
+    <div class="modal-content">
+        <h2>🔓 Desativar Autenticação 2FA</h2>
+        <p>Ao desativar, sua conta ficará protegida apenas pela senha. Para confirmar, digite sua senha atual.</p>
+
+        <form method="POST" action="{{ route('2fa.disable') }}" onsubmit="return confirm('Tem certeza que deseja desativar a proteção 2FA?')">
+            @csrf
+            <label style="display:block;font-size:0.8rem;color:var(--text-m);font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px">Sua senha</label>
+            <div style="position:relative">
+                <input id="disable_2fa_password" type="password" name="password" required autocomplete="current-password" style="width:100%; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px 46px 14px 14px; font-size: 0.95rem;">
+                <button type="button" data-toggle-password="disable_2fa_password" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color: var(--text-m);">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            @if($errors->has('password'))
+                <div style="color:#dc2626; font-size:0.82rem; margin-top:8px; font-weight:600;">
+                    <i class="fas fa-times-circle"></i> {{ $errors->first('password') }}
+                </div>
+            @endif
+
+            <button class="modal-close" type="submit" style="background: #dc2626; margin-top:16px;">
+                <i class="fas fa-unlock"></i> Desativar 2FA
+            </button>
+            <button class="modal-close" type="button" onclick="closeModal('2fa-disable')" style="background: var(--brand); margin-top:10px;">
+                Cancelar
+            </button>
+        </form>
+    </div>
+</div>
+
+@if(session('success'))
+<div id="flash-success" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;background:#059669;color:#fff;padding:14px 24px;border-radius:16px;font-weight:700;font-size:0.9rem;box-shadow:0 4px 20px rgba(5,150,105,0.3);display:flex;align-items:center;gap:10px;animation:slideDown .4s ease">
+    <i class="fas fa-check-circle"></i> {{ session('success') }}
+</div>
+@endif
+@if(session('info'))
+<div id="flash-success" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;background:var(--brand);color:#fff;padding:14px 24px;border-radius:16px;font-weight:700;font-size:0.9rem;box-shadow:0 4px 20px rgba(30,58,138,0.3);display:flex;align-items:center;gap:10px;animation:slideDown .4s ease">
+    <i class="fas fa-info-circle"></i> {{ session('info') }}
+</div>
+@endif
+
+<style>
+@keyframes slideDown {
+    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+</style>
+
 <script>
 function showModal(id) {
     const el = document.getElementById('modal-' + id);
@@ -612,6 +679,22 @@ document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
         }
     });
 });
+
+// Auto-dismiss flash messages
+const flash = document.getElementById('flash-success');
+if (flash) {
+    setTimeout(() => {
+        flash.style.transition = 'opacity 0.5s, transform 0.5s';
+        flash.style.opacity = '0';
+        flash.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(() => flash.remove(), 500);
+    }, 4000);
+}
+
+// Se há erro de senha, abrir modal de desativar 2FA automaticamente
+@if($errors->has('password'))
+    showModal('2fa-disable');
+@endif
 </script>
 
 </body>
