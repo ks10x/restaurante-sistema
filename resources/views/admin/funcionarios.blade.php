@@ -1,81 +1,105 @@
 @extends('layouts.admin')
 
-@section('content')
-<div class="space-y-6" x-data="funcionarioManager()">
+@section('title', 'Gestão de Equipe')
 
-    <!-- Header & Ações -->
-    <div class="sm:flex sm:items-center sm:justify-between">
+@section('content')
+<div class="space-y-8" x-data="funcionarioManager()">
+    
+    <!-- Header da Seção -->
+    <div class="sm:flex sm:items-center sm:justify-between border-b border-slate-200 pb-5">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900 border-b-2 border-brand-500 pb-2 inline-block">Equipe e Funcionários</h1>
-            <p class="mt-2 text-sm text-slate-600">Gerencie o acesso da sua equipe ao sistema.</p>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Equipe e Funcionários</h1>
+            <p class="mt-2 text-sm text-slate-500 font-medium">Controle os níveis de acesso e gerencie as credenciais da sua equipe.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex gap-3">
-            <button @click="openModal('create')" class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg shadow-md transition-all active:scale-95 text-sm ring-2 ring-blue-500 ring-offset-2">
-                + Novo Funcionário
+            <button @click="openModal('create')" class="bg-slate-900 hover:bg-black text-white font-black px-6 py-3 rounded-2xl shadow-lg shadow-slate-200 transition-all active:scale-95 flex items-center gap-2 text-sm">
+                <i class="fas fa-plus-circle"></i>
+                Novo Funcionário
             </button>
         </div>
     </div>
 
     <!-- Tabela de Funcionários -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nome</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">E-mail</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cargo / Nível</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Código (PIN)</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data de Cadastro</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Ações</th>
+    <div class="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm">
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-users-cog text-brand-500"></i>
+                Membros da Equipe
+            </h2>
+            <span class="bg-slate-200 text-slate-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                {{ $funcionarios->total() }} @choice('Membro|Membros', $funcionarios->total())
+            </span>
+        </div>
+
+        <div class="overflow-x-auto text-sm">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Nome</th>
+                        <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Acesso (E-mail)</th>
+                        <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Nível</th>
+                        <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Código (PIN)</th>
+                        <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
+                <tbody class="divide-y divide-slate-100">
                     @forelse($funcionarios as $func)
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-bold text-slate-900">{{ $func->name }}</div>
-                            @if($func->id === auth()->id())
-                                <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Você</span>
-                            @endif
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-black border-2 border-white shadow-sm overflow-hidden">
+                                    @if($func->avatar)
+                                        <img src="{{ Storage::url($func->avatar) }}" alt="" class="w-full h-full object-cover">
+                                    @else
+                                        {{ substr($func->name, 0, 1) }}
+                                    @endif
+                                </div>
+                                <div>
+                                    <div class="font-bold text-slate-900 leading-none">
+                                        {{ $func->name }}
+                                        @if($func->id === auth()->id())
+                                            <span class="ml-1 text-[10px] text-brand-500 font-black uppercase">Você</span>
+                                        @endif
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-tighter">Membro desde {{ $func->created_at->format('M Y') }}</div>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-600">
                             {{ $func->email }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
                             @php
                                 $roleData = match((int)$func->role) {
-                                    0 => ['bg-indigo-100 text-indigo-800 border-indigo-200', 'Administrador'],
-                                    1 => ['bg-amber-100 text-amber-800 border-amber-200', 'Cozinha'],
-                                    3 => ['bg-emerald-100 text-emerald-800 border-emerald-200', 'Entregador'],
-                                    default => ['bg-slate-100 text-slate-800 border-slate-200', 'Desconhecido']
+                                    0 => ['bg-indigo-100 text-indigo-700 border-indigo-200', 'Administrador'],
+                                    1 => ['bg-amber-100 text-amber-700 border-amber-200', 'Cozinha'],
+                                    3 => ['bg-emerald-100 text-emerald-700 border-emerald-200', 'Entregador'],
+                                    4 => ['bg-blue-100 text-blue-700 border-blue-200', 'Garçom'],
+                                    default => ['bg-slate-100 text-slate-700 border-slate-200', 'Staff']
                                 };
                             @endphp
-                            <span class="px-2.5 py-0.5 inline-flex text-xs font-semibold rounded-full border {{ $roleData[0] }}">
+                            <span class="px-2.5 py-0.5 inline-flex text-[10px] font-black uppercase rounded-full border {{ $roleData[0] }}">
                                 {{ $roleData[1] }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200 text-xs font-mono font-bold">
-                                {{ $func->funcionario->codigo_identificacao ?? 'N/A' }}
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-xl bg-slate-50 text-slate-800 border border-slate-200 text-xs font-mono font-black tracking-widest shadow-inner">
+                                {{ $func->funcionario->codigo_identificacao ?? '----' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            {{ $func->created_at->format('d/m/Y') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <button @click="openInfo({{ Js::from($func) }})" class="text-slate-400 hover:text-brand-600 transition-colors px-2" title="Ver informações">
-                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        <td class="px-6 py-4 whitespace-nowrap text-right space-x-1">
+                            <button @click="openInfo({{ Js::from($func) }})" class="p-2 text-slate-300 hover:text-brand-500 transition-all" title="Ver Informações">
+                                <i class="fas fa-info-circle"></i>
                             </button>
-                            <button @click="openModal('edit', {{ Js::from($func) }})" class="text-slate-400 hover:text-brand-600 transition-colors px-2" title="Editar Funcionário">
-                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            <button @click="openModal('edit', {{ Js::from($func) }})" class="p-2 text-slate-300 hover:text-brand-500 transition-all" title="Editar Credenciais">
+                                <i class="fas fa-edit"></i>
                             </button>
                             @if($func->id !== auth()->id())
-                            <form action="{{ route('admin.funcionarios.destroy', $func) }}" method="POST" class="inline-block" onsubmit="return adminConfirmSubmit(event, { title: 'Excluir funcionário', message: 'Tem certeza que deseja excluir permanentemente este funcionário?', confirmText: 'Excluir' });">
+                            <form action="{{ route('admin.funcionarios.destroy', $func) }}" method="POST" class="inline-block" onsubmit="return adminConfirmSubmit(event, { title: 'Demitir Funcionário', message: 'Deseja realmente excluir permanentemente este acesso?', confirmText: 'Remover Membro' });">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-slate-400 hover:text-red-600 transition-colors px-2" title="Remover Funcionário">
-                                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                <button type="submit" class="p-2 text-slate-300 hover:text-red-500 transition-all" title="Remover Funcionário">
+                                    <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
                             @endif
@@ -83,86 +107,105 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-                            Nenhum funcionário cadastrado.
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 font-medium italic">
+                            Nenhum funcionário cadastrado no sistema.
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="px-6 py-4 border-t border-slate-200">
+        @if($funcionarios->hasPages())
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/30">
             {{ $funcionarios->links() }}
         </div>
+        @endif
     </div>
 
-    <!-- Modal Form -->
-    <div x-show="isModalOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+    <!-- Modal Form (Modernizado) -->
+    <div x-show="isModalOpen" 
+         x-transition:enter="ease-out duration-300" 
+         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+         class="fixed inset-0 z-[100] overflow-y-auto" style="display: none;">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="isModalOpen" x-transition.opacity class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity" @click="closeModal()"></div>
+            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closeModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
             
-            <div x-show="isModalOpen" class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border-t-4 border-brand-500">
+            <div class="inline-block align-bottom bg-white rounded-[32px] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200">
                 <form :action="formAction" method="POST">
                     @csrf
                     <template x-if="mode === 'edit'">
                         <input type="hidden" name="_method" value="PUT">
                     </template>
 
-                    <div class="px-6 py-5 bg-white space-y-4">
-                        <h3 class="text-lg leading-6 font-bold text-slate-900 mb-4" x-text="mode === 'edit' ? 'Editar Funcionário' : 'Novo Funcionário'"></h3>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Nome Completo</label>
-                            <input type="text" name="name" x-model="formData.name" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 outline-none focus:border-brand-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Endereço de E-mail</label>
-                            <input type="email" name="email" x-model="formData.email" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 outline-none focus:border-brand-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Cargo / Nível de Acesso</label>
-                            <select name="role" x-model="formData.role" required class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 outline-none focus:border-brand-500">
-                                <option value="0">Administrador (Total)</option>
-                                <option value="1">Cozinha (Gestão de Fila)</option>
-                                <option value="3">Entregador</option>
-                            </select>
-                        </div>
-
-                        <div class="pt-2 border-t border-slate-100">
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">
-                                Senha de Acesso
-                                <span x-show="mode === 'edit'" class="text-xs text-orange-600 font-normal ml-1">(Deixe em branco para manter a atual)</span>
-                            </label>
-                            <div class="relative mb-3">
-                                <input id="func_password" type="password" name="password" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 pr-12 text-slate-900 outline-none focus:border-brand-500" placeholder="Mínimo 8 caracteres">
-                                <button type="button" data-toggle-password="func_password" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
+                    <div class="px-8 py-7">
+                        <div class="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-black text-slate-900 tracking-tight" x-text="mode === 'edit' ? 'Editar Credenciais' : 'Cadastrar Membro'"></h3>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão de Equipe e PINs</p>
                             </div>
-                            
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Confirmar Senha</label>
-                            <div class="relative">
-                                <input id="func_password_confirmation" type="password" name="password_confirmation" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 pr-12 text-slate-900 outline-none focus:border-brand-500">
-                                <button type="button" data-toggle-password="func_password_confirmation" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </button>
+                            <div class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-brand-500 text-lg">
+                                <i :class="mode === 'edit' ? 'fas fa-id-card' : 'fas fa-user-plus'"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-5">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</label>
+                                <input type="text" name="name" x-model="formData.name" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-slate-900 font-bold focus:border-brand-500 outline-none transition-all placeholder:text-slate-300" placeholder="Ex: João da Silva">
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">E-mail de Acesso</label>
+                                <input type="email" name="email" x-model="formData.email" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-slate-900 font-bold focus:border-brand-500 outline-none transition-all placeholder:text-slate-300" placeholder="joao@restaurante.com">
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Cargo / Nível de Acesso</label>
+                                <div class="relative">
+                                    <select name="role" x-model="formData.role" required class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-slate-900 font-bold focus:border-brand-500 outline-none transition-all appearance-none cursor-pointer">
+                                        <option value="4">Garçom (Painel de Mesas)</option>
+                                        <option value="1">Cozinha (Gestão de Fila)</option>
+                                        <option value="3">Entregador (App Entrega)</option>
+                                        <option value="0">Administrador (Total)</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-300">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 space-y-4 border-t border-slate-100">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Senha de Acesso
+                                        <span x-show="mode === 'edit'" class="text-[9px] text-amber-500 font-black italic">(Deixe em branco para não alterar)</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input id="modal_pass" type="password" name="password" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-slate-900 font-bold focus:border-brand-500 outline-none transition-all placeholder:text-slate-300" placeholder="Mínimo 8 caracteres">
+                                        <button type="button" data-toggle-password="modal_pass" class="absolute inset-y-0 right-4 flex items-center text-slate-300 hover:text-slate-500">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirmar Senha</label>
+                                    <div class="relative">
+                                        <input id="modal_pass_conf" type="password" name="password_confirmation" :required="mode === 'create'" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-slate-900 font-bold focus:border-brand-500 outline-none transition-all placeholder:text-slate-300">
+                                        <button type="button" data-toggle-password="modal_pass_conf" class="absolute inset-y-0 right-4 flex items-center text-slate-300 hover:text-slate-500">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="bg-slate-50 px-6 py-4 flex justify-between rounded-b-2xl border-t border-slate-100">
-                        <button type="button" @click="closeModal()" class="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg shadow-sm hover:bg-slate-100">Cancelar</button>
-                        <button type="submit" class="px-6 py-2 bg-brand-600 text-white font-bold rounded-lg shadow-sm hover:bg-brand-700">
-                            <span x-text="mode === 'edit' ? 'Salvar Edição' : 'Cadastrar'"></span>
+                    <div class="bg-slate-50/80 px-8 py-6 flex items-center justify-between border-t border-slate-100">
+                        <button type="button" @click="closeModal()" class="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Voltar</button>
+                        <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-lg shadow-brand-100 transition-all active:scale-95 text-sm">
+                            <span x-text="mode === 'edit' ? 'Salvar Alterações' : 'Cadastrar Membro'"></span>
                         </button>
                     </div>
                 </form>
@@ -170,35 +213,49 @@
         </div>
     </div>
 
-    <!-- Modal Info -->
-    <div x-show="isInfoOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div x-show="isInfoOpen" x-transition.opacity class="fixed inset-0 bg-slate-900 bg-opacity-50 transition-opacity" @click="closeInfo()"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-
-            <div x-show="isInfoOpen" class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border-t-4 border-brand-500">
-                <div class="px-6 py-5 bg-white">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <h3 class="text-lg leading-6 font-bold text-slate-900">Informações do Funcionário</h3>
-                            <p class="text-xs text-slate-500 mt-1" x-text="`ID #${selectedInfo?.id ?? ''}`"></p>
-                        </div>
-                        <button type="button" class="text-slate-400 hover:text-slate-600" @click="closeInfo()">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                    </div>
-
-                    <div class="mt-4 space-y-3 text-sm text-slate-700">
-                        <div><span class="font-semibold">Nome:</span> <span x-text="selectedInfo?.name ?? ''"></span></div>
-                        <div><span class="font-semibold">E-mail:</span> <span x-text="selectedInfo?.email ?? ''"></span></div>
-                        <div><span class="font-semibold">Cargo (role):</span> <span x-text="selectedInfo?.role ?? ''"></span></div>
-                        <div><span class="font-semibold">PIN:</span> <span x-text="selectedInfo?.funcionario?.codigo_identificacao ?? 'N/A'"></span></div>
-                        <div><span class="font-semibold">Criado em:</span> <span x-text="selectedInfo?.created_at ?? '-'"></span></div>
-                    </div>
+    <!-- Modal Info (Modernizado) -->
+    <div x-show="isInfoOpen" x-transition class="fixed inset-0 z-[100] overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closeInfo()"></div>
+            
+            <div class="relative bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200">
+                <div class="h-24 bg-brand-500 relative">
+                    <button @click="closeInfo()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/20 text-white flex items-center justify-center hover:bg-black/40 transition-colors">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
                 </div>
+                <div class="px-8 pb-8 -mt-12 relative text-center">
+                    <div class="w-24 h-24 rounded-3xl bg-white shadow-xl mx-auto flex items-center justify-center border-4 border-white overflow-hidden mb-4">
+                        <template x-if="selectedInfo && selectedInfo.avatar">
+                            <img :src="`/storage/${selectedInfo.avatar}`" class="w-full h-full object-cover">
+                        </template>
+                        <template x-if="!selectedInfo || !selectedInfo.avatar">
+                            <span class="text-3xl font-black text-slate-200" x-text="selectedInfo?.name?.charAt(0)"></span>
+                        </template>
+                    </div>
+                    
+                    <h3 class="text-xl font-black text-slate-900 tracking-tight" x-text="selectedInfo?.name"></h3>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1" x-text="selectedInfo?.email"></p>
+                    
+                    <div class="mt-8 grid grid-cols-2 gap-3">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nível de Sistema</div>
+                            <div class="text-xs font-bold text-slate-700" x-text="selectedInfo?.role"></div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Código PIN</div>
+                            <div class="text-xs font-black text-brand-600 tracking-widest font-mono" x-text="selectedInfo?.funcionario?.codigo_identificacao ?? 'N/A'"></div>
+                        </div>
+                    </div>
 
-                <div class="bg-slate-50 px-6 py-4 flex justify-end rounded-b-2xl border-t border-slate-100">
-                    <button type="button" @click="closeInfo()" class="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-lg shadow-sm hover:bg-slate-100">Fechar</button>
+                    <div class="mt-8 pt-6 border-t border-slate-50 flex items-center justify-center gap-2 text-slate-400">
+                        <i class="fas fa-calendar-alt text-[10px]"></i>
+                        <span class="text-[10px] font-bold uppercase tracking-tight">Membro ativo no sistema</span>
+                    </div>
+
+                    <button @click="closeInfo()" class="mt-6 w-full py-4 bg-slate-900 hover:bg-black text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all">
+                        Fechar Perfil
+                    </button>
                 </div>
             </div>
         </div>
@@ -210,14 +267,10 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('funcionarioManager', () => ({
         isModalOpen: false,
         isInfoOpen: false,
-        mode: 'create', // create | edit
+        mode: 'create',
         formAction: "{{ route('admin.funcionarios.store') }}",
         selectedInfo: null,
-        formData: {
-            name: '',
-            email: '',
-            role: '1'
-        },
+        formData: { name: '', email: '', role: '4' },
 
         openModal(mode, data = null) {
             this.mode = mode;
@@ -230,7 +283,7 @@ document.addEventListener('alpine:init', () => {
                 };
             } else {
                 this.formAction = "{{ route('admin.funcionarios.store') }}";
-                this.formData = { name: '', email: '', role: '1' };
+                this.formData = { name: '', email: '', role: '4' };
             }
             this.isModalOpen = true;
         },
@@ -240,14 +293,8 @@ document.addEventListener('alpine:init', () => {
             this.isInfoOpen = true;
         },
 
-        closeInfo() {
-            this.isInfoOpen = false;
-            this.selectedInfo = null;
-        },
-
-        closeModal() {
-            this.isModalOpen = false;
-        }
+        closeInfo() { this.isInfoOpen = false; this.selectedInfo = null; },
+        closeModal() { this.isModalOpen = false; }
     }));
 });
 </script>
@@ -257,7 +304,14 @@ document.addEventListener('alpine:init', () => {
             const id = btn.getAttribute('data-toggle-password');
             const input = document.getElementById(id);
             if (!input) return;
-            input.type = input.type === 'password' ? 'text' : 'password';
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
         });
     });
 </script>

@@ -112,7 +112,12 @@ Route::middleware(['auth'])->prefix('2fa')->name('2fa.')->group(function () {
 // QR CODE DA MESA (Acesso Público com Sessão)
 // ═════════════════════════════════════════════════════════════
 Route::get('/m/{hash}', [\App\Http\Controllers\Mesa\ComandaController::class, 'abrirMesa'])->name('mesa.abrir');
-Route::get('/comanda', [\App\Http\Controllers\Mesa\ComandaController::class, 'verComanda'])->name('mesa.comanda');
+Route::get('/m/{hash}/cardapio', [\App\Http\Controllers\Mesa\ComandaController::class, 'cardapio'])->name('mesa.cardapio');
+Route::get('/m/{hash}/comanda', [\App\Http\Controllers\Mesa\ComandaController::class, 'verComanda'])->name('mesa.comanda');
+Route::get('/m/status-check', [\App\Http\Controllers\Mesa\ComandaController::class, 'statusCheck'])->name('mesa.status-check');
+
+
+
 Route::post('/comanda/chamar-garcom', [\App\Http\Controllers\Mesa\ComandaController::class, 'chamarGarcom'])->name('mesa.fechar');
 Route::post('/comanda/pedir', [\App\Http\Controllers\Mesa\ComandaController::class, 'enviarPedido'])->name('mesa.pedir');
 
@@ -201,8 +206,10 @@ Route::middleware(['auth', 'role:0,4', '2fa.required'])
     ->name('garcom.')
     ->group(function () {
         Route::get('/', [\App\Http\Controllers\Garcom\PainelController::class, 'index'])->name('index');
+        Route::get('/pedidos', [\App\Http\Controllers\Garcom\PainelController::class, 'pedidos'])->name('pedidos');
         Route::get('/mesa/{mesa}', [\App\Http\Controllers\Garcom\PainelController::class, 'show'])->name('mesa.show');
         Route::post('/mesa/{mesa}/fechar', [\App\Http\Controllers\Garcom\PainelController::class, 'fecharConta'])->name('mesa.fechar');
+        Route::post('/mesa/{mesa}/limpar', [\App\Http\Controllers\Garcom\PainelController::class, 'limparMesa'])->name('mesa.limpar');
     });
 
 

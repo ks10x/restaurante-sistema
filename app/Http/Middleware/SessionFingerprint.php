@@ -5,19 +5,25 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class SessionFingerprint
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check()) {
+        // Ignora verificação para rotas da Mesa Digital (Cliente)
+        if ($request->is('m/*')) {
+            return $next($request);
+        }
+
+        if (Auth::guard('web')->check()) {
             $fingerprint = md5($request->ip() . $request->userAgent());
             
             if (!$request->session()->has('fingerprint')) {
                 $request->session()->put('fingerprint', $fingerprint);
             } elseif ($request->session()->get('fingerprint') !== $fingerprint) {
                 // Sessão sequestrada ou mudança brusca de IP
-                auth()->logout();
+                Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 

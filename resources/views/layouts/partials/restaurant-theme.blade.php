@@ -31,6 +31,8 @@
     }
 
     .bg-custom-primary { background-color: var(--bg-primary); }
+    .bg-custom-secondary { background-color: var(--color-secondary); }
+    .bg-custom-secondary-dark { background-color: var(--color-secondary-dark); }
     .bg-custom-secondary-soft { background-color: var(--surface-accent); }
     .text-custom-secondary { color: var(--color-secondary); }
     .text-custom-main { color: var(--text-main); }

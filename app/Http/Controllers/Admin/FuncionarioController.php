@@ -13,8 +13,8 @@ class FuncionarioController extends Controller
 {
     public function index()
     {
-        // 0 = Admin, 1 = Cozinha, 3 = Entregador. Rejeitamos 2 (Clientes)
-        $funcionarios = User::with('funcionario')->whereIn('role', [0, 1, 3])->orderBy('id', 'desc')->paginate(20);
+        // 0 = Admin, 1 = Cozinha, 3 = Entregador, 4 = Garçom. Rejeitamos 2 (Clientes)
+        $funcionarios = User::with('funcionario')->whereIn('role', [0, 1, 3, 4])->orderBy('id', 'desc')->paginate(20);
         return view('admin.funcionarios', compact('funcionarios'));
     }
 
@@ -23,7 +23,7 @@ class FuncionarioController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => ['required', Rule::in([0, 1, 3])],
+            'role' => ['required', Rule::in([0, 1, 3, 4])],
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -56,7 +56,7 @@ class FuncionarioController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', Rule::in([0, 1, 3])],
+            'role' => ['required', Rule::in([0, 1, 3, 4])],
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
